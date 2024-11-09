@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
-import { Pool } from 'pg'; // Use 'mysql2/promise' if using MySQL
+import pg from 'pg'; // Use 'mysql2/promise' if using MySQL
+const { Pool } = pg;
 
 dotenv.config();
 

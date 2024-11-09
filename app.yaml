@@ -1,0 +1,35 @@
+runtime: nodejs20
+env: standard
+
+# Define the entry point for your application
+entrypoint: yarn start
+
+# Environment variables (replace with your actual values or secrets)
+env_variables:
+  POSTGRES_STRING: ${{ secrets.POSTGRES_STRING }}
+
+# Automatic scaling configuration
+automatic_scaling:
+  target_cpu_utilization: 0.65
+  target_throughput_utilization: 0.75
+  min_instances: 1
+  max_instances: 5
+
+# Network configuration
+network:
+  instance_tag: solana-devnet-faucet-backend
+  name: default
+
+# Optional: Specify resources
+resources:
+  cpu: 1
+  memory_gb: 0.5
+  disk_size_gb: 10
+
+# Optional: Health check configuration
+health_check:
+  enable_health_check: True
+  check_interval_sec: 10
+  timeout_sec: 4
+  unhealthy_threshold: 2
+  healthy_threshold: 2
