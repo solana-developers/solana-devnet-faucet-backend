@@ -36,6 +36,13 @@ jobs:
           gcloud config set account ${{ secrets.SERVICE_ACCOUNT }}
           gcloud config set project ${{ secrets.PROJECT_ID }}
 
+      - name: Replace app.yml secrets
+        uses: 73h/gae-app-yaml-replace-env-variables@v0.1
+        env:
+          POSTGRES_STRING: ${{ secrets.POSTGRES_STRING }}
+        with:
+          app_yaml_path: app.yaml
+
       - name: Deploy to App Engine
         uses: google-github-actions/deploy-appengine@v2
         with:

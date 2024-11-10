@@ -11,7 +11,7 @@ entrypoint: yarn start
 
 # Environment variables (replace with your actual values or secrets)
 env_variables:
-  POSTGRES_STRING: ${{ secrets.POSTGRES_STRING }}
+  POSTGRES_STRING: $POSTGRES_STRING
 
 # Automatic scaling configuration
 automatic_scaling:
