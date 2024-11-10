@@ -1,5 +1,10 @@
-runtime: nodejs20
-env: standard
+service: devnet-faucet-backend
+runtime: nodejs
+env: flex
+
+runtime_config:
+  operating_system: "ubuntu22"
+  runtime_version: "20"
 
 # Define the entry point for your application
 entrypoint: yarn start
@@ -13,7 +18,7 @@ automatic_scaling:
   target_cpu_utilization: 0.65
   target_throughput_utilization: 0.75
   min_instances: 1
-  max_instances: 5
+  max_instances: 1
 
 # Network configuration
 network:
