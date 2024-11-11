@@ -1,15 +1,13 @@
-// Importing Express and Routes using ES Module syntax
 import express from 'express';
-import routes from './src/routes/index.js'; // Must include the .js extension in ES Modules
+import routes from './src/routes/index.js';
+import { validateGoogleToken } from './src/routes/middleware/authorization.js';
 
 // Initialize Express
 const app = express();
 
 // Middleware
 app.use(express.json()); // Parse JSON request bodies
-
-// Routes
-app.use('/api', routes); // Use routes from the /routes folder
+app.use('/api', validateGoogleToken, routes); // Secure all API routes
 
 // Global Error Handling Middleware
 app.use((err, req, res, next) => {

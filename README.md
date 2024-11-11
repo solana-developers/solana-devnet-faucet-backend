@@ -19,6 +19,7 @@ This API provides endpoints for interacting with two main tables: `faucet.solana
 3. Set up your `.env` file with the following
    ```env
    POSTGRES_STRING=postgresql://<user>:<password>@<host>:<port>/<database>
+   PROJECT_ID=<GCP Project ID>
    ```
 
 4. Start the server

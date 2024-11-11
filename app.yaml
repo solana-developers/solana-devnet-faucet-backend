@@ -12,6 +12,7 @@ entrypoint: yarn start
 # Environment variables (replace with your actual values or secrets)
 env_variables:
   POSTGRES_STRING: $POSTGRES_STRING
+  PROJECT_ID: $PROJECT_ID
 
 # Automatic scaling configuration
 automatic_scaling:
