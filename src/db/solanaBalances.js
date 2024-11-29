@@ -4,7 +4,8 @@ import db from './config.js'; // Import the database config
 const createSolanaBalance = async (account, balance) => {
     const query = `
         INSERT INTO faucet.solana_balances (account, balance)
-        VALUES ($1, $2);
+        VALUES ($1, $2)
+        RETURNING *;
     `;
     const values = [account, balance];
     const result = await db.query(query, values);
