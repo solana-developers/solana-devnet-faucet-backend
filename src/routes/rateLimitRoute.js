@@ -35,9 +35,13 @@ router.get('/rate-limits/:key', async (req, res, next) => {
 router.put('/rate-limits/:key', async (req, res, next) => {
     const { key } = req.params;
     const { timestamps } = req.body;
+    console.log(req.body);
+    console.log(key);
+    console.log("-----------");
 
     try {
         const updatedRateLimit = await rateLimits.updateRateLimit(key, timestamps);
+        console.log("updatedRateLimit", updatedRateLimit);
         if (updatedRateLimit) {
             res.status(200).json(updatedRateLimit);
         } else {
