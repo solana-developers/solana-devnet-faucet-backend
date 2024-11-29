@@ -28,10 +28,8 @@ const updateRateLimit = async (key, timestamps) => {
     WHERE key = $1
     RETURNING *;
   `;
-    console.log('query', query);
     const values = [key, timestamps];
     const result = await db.query(query, values);
-    console.log("result", result);
     return result.rows[0];
 };
 
