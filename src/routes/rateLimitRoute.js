@@ -11,6 +11,7 @@ router.post('/rate-limits', async (req, res, next) => {
         const newRateLimit = await rateLimits.createRateLimit(key, timestamps);
         res.status(201).json(newRateLimit);
     } catch (error) {
+        console.error(`Error creating rate limit for key "${key}":`, error);
         next(error); // Pass errors to global error handler
     }
 });
@@ -24,9 +25,11 @@ router.get('/rate-limits/:key', async (req, res, next) => {
         if (rateLimit) {
             res.status(200).json(rateLimit);
         } else {
+            console.warn(`Rate limit not found for key "${key}"`);
             res.status(404).json({ message: 'Rate limit not found' });
         }
     } catch (error) {
+        console.error(`Error retrieving rate limit for key "${key}":`, error);
         next(error);
     }
 });
@@ -41,9 +44,11 @@ router.put('/rate-limits/:key', async (req, res, next) => {
         if (updatedRateLimit) {
             res.status(200).json(updatedRateLimit);
         } else {
+            console.warn(`Rate limit not found for key "${key}"`);
             res.status(404).json({ message: 'Rate limit not found' });
         }
     } catch (error) {
+        console.error(`Error updating rate limit for key "${key}":`, error);
         next(error);
     }
 });

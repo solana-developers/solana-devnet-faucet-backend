@@ -11,6 +11,7 @@ router.post('/solana-balances', async (req, res, next) => {
         const newBalance = await solanaBalances.createSolanaBalance(account, balance);
         res.status(201).json(newBalance);
     } catch (error) {
+        console.error(`Error creating Solana balance for account: ${account}, Error: ${error.message}`);
         next(error);
     }
 });
@@ -23,6 +24,7 @@ router.get('/solana-balances/account/:account', async (req, res, next) => {
         const balances = await solanaBalances.getSolanaBalancesByAccount(account);
         res.status(200).json(balances);
     } catch (error) {
+        console.error(`Error retrieving Solana balances for account: ${account}, Error: ${error.message}`);
         next(error);
     }
 });
@@ -33,9 +35,9 @@ router.get('/solana-balances/recent', async (req, res, next) => {
         const recentBalances = await solanaBalances.getRecentBalances();
         res.status(200).json(recentBalances);
     } catch (error) {
+        console.error(`Error retrieving recent Solana balances, Error: ${error.message}`);
         next(error);
     }
 });
-
 
 export default router;
