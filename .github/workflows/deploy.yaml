@@ -41,7 +41,6 @@ jobs:
         env:
           POSTGRES_STRING: ${{ secrets.POSTGRES_STRING }} # Format: postgres://user:password@/cloudsql/INSTANCE_CONNECTION_NAME/db_name
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
-          SQL_INSTANCE_CONNECTION_NAME: ${{ secrets.SQL_INSTANCE_CONNECTION_NAME}}
         with:
           app_yaml_path: app.yaml
 
