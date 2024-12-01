@@ -13,6 +13,7 @@ entrypoint: yarn start
 env_variables:
   POSTGRES_STRING: $POSTGRES_STRING
   PROJECT_ID: $PROJECT_ID
+  SQL_INSTANCE_CONNECTION_NAME: $SQL_INSTANCE_CONNECTION_NAME
 
 # Automatic scaling configuration
 automatic_scaling:
