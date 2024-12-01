@@ -26,4 +26,4 @@ network:
 
 # Cloud SQL Auth Proxy configuration
 beta_settings:
-  cloud_sql_instances: analytics-324114:us-central1:analytics-postgres
+  cloud_sql_instances: analytics-324114:us-central1:analytics-postgres=tcp:5432
