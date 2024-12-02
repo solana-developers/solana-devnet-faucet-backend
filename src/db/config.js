@@ -5,7 +5,10 @@ const { Pool } = pg;
 dotenv.config();
 
 const pgClient = new Pool({
-    connectionString: process.env.POSTGRES_STRING, // Single connection string from .env
+    user: process.env.DB_USER,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    host: `/cloudsql/${process.env.DB_CONNECTION_NAME}`
 });
 
 const query = (text, params) => pgClient.query(text, params);
