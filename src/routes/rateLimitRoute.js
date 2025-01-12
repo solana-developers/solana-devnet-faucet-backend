@@ -59,7 +59,7 @@ router.post('/rate-limits-combo', async (req, res, next) => {
 
     // Validate the input
     if (!ip_address || !wallet_address) {
-        return res.status(400).json({ message: 'All fields (ip_address, wallet_address, github_username) are required.' });
+        return res.status(400).json({ message: 'All fields (ip_address, wallet_address) are required.' });
     }
 
     try {

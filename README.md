@@ -186,7 +186,7 @@ Below are the available endpoints for each table.
   {
     "ip_address": "string",
     "wallet_address": "string",
-    "github_username": "string"
+    "github_userid": "string"
   }
   ```
 - **Curl Command**:
