@@ -28,7 +28,7 @@ Below are the available endpoints for each table.
 
 4. **OPTIONAL** In order to test the Github API locally, you need to provide a [Github Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) in your `.env` file. The token only needs `read:user` and `public_repo`
     ```
-    GITHUB_TOKEN=<Github Token>
+    GH_TOKEN=<Github Token>
     ```
 
 5. Start the server

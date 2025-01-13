@@ -11,15 +11,15 @@ const daysSince = (date) => {
 router.get('/gh-validation/:userId', async (req, res) => {
     const { userId } = req.params;
 
-    const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-    if (!GITHUB_TOKEN) {
+    const GH_TOKEN = process.env.GH_TOKEN;
+    if (!GH_TOKEN) {
         return res.status(500).json({ error: "GitHub token not configured." });
     }
 
     try {
         const response = await fetch(`https://api.github.com/user/${userId}`, {
             headers: {
-                Authorization: `token ${GITHUB_TOKEN}`,
+                Authorization: `token ${GH_TOKEN}`,
                 Accept: 'application/vnd.github.v3+json'
             }
         });

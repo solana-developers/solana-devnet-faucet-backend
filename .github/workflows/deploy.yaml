@@ -39,7 +39,7 @@ jobs:
       - name: Replace app.yml secrets
         uses: 73h/gae-app-yaml-replace-env-variables@v0.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
           DB_USER: ${{ secrets.DB_USER}}
           DB_NAME: ${{ secrets.DB_NAME}}
