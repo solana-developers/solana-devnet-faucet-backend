@@ -180,7 +180,7 @@ Below are the available endpoints for each table.
 **POST** `/api/rate-limits-combo`
 
 - **Description**: Adds a new rate limit combination entry. Each combination of `ip_address`, `wallet_address`,
-  and `github_username` is checked for uniqueness before inserting to DB.
+  and `github_userid` is checked for uniqueness before inserting to DB.
 - **Request Body**:
   ```json
   {
