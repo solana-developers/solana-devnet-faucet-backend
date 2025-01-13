@@ -34,6 +34,9 @@ router.get('/gh-validation/:userId', async (req, res) => {
         const accountAge = daysSince(userData.created_at);
         valid = accountAge >= ACCOUNT_AGE_MINIMUM_DAYS;
 
+        if(!valid){
+            console.error(`Github User ID ${userId} is invalid. Username: ${userData.login}`)
+        }
         res.status(200).json({
             valid,
         });
