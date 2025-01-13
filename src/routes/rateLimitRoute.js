@@ -70,10 +70,10 @@ router.post('/rate-limits-combo', async (req, res, next) => {
     } catch (error) {
         if (error.code === '23505') { // Unique violation error code for PostgreSQL
             console.warn('Duplicate rate limit combo:', error.detail);
-            res.status(409).json({ message: 'Combination of ip_address, wallet_address, and github_userid already exists.' });
+            res.status(204).json({ message: 'Combination of ip_address, wallet_address, and github_userid already exists.' });
         } else {
             console.error('Error creating rate limit combo:', error);
-            next(error);
+            res.status(204).json({ message: 'Error creating rate limit combo.' });
         }
     }
 });
