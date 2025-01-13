@@ -3,7 +3,7 @@ import rateLimits from '../db/rateLimits.js'; // Import the CRUD methods for the
 
 const router = express.Router();
 
-// CREATE a new rate limit
+// POST a new rate limit
 router.post('/rate-limits', async (req, res, next) => {
     const { key, timestamps } = req.body;
 
@@ -16,7 +16,7 @@ router.post('/rate-limits', async (req, res, next) => {
     }
 });
 
-// READ a rate limit by key
+// GET a rate limit by key
 router.get('/rate-limits/:key', async (req, res, next) => {
     const { key } = req.params;
 
@@ -34,7 +34,7 @@ router.get('/rate-limits/:key', async (req, res, next) => {
     }
 });
 
-// UPDATE timestamps for a rate limit by key
+// PUT timestamps for a rate limit by key
 router.put('/rate-limits/:key', async (req, res, next) => {
     const { key } = req.params;
     const { timestamps } = req.body;
@@ -50,6 +50,31 @@ router.put('/rate-limits/:key', async (req, res, next) => {
     } catch (error) {
         console.error(`Error updating rate limit for key "${key}":`, error);
         next(error);
+    }
+});
+
+// POST rate limit combination
+router.post('/rate-limits-combo', async (req, res, next) => {
+    const { ip_address, wallet_address, github_userid } = req.body;
+
+    // Validate the input
+    if (!ip_address || !wallet_address) {
+        return res.status(400).json({ message: 'All fields (ip_address, wallet_address) are required.' });
+    }
+
+    try {
+        // Insert the new combination into the database
+        const newCombo = await rateLimits.createRateLimitCombo(ip_address, wallet_address, github_userid ?? '');
+
+        res.status(201).json(newCombo);
+    } catch (error) {
+        if (error.code === '23505') { // Unique violation error code for PostgreSQL
+            console.warn('Duplicate rate limit combo:', error.detail);
+            res.status(409).json({ message: 'Combination of ip_address, wallet_address, and github_userid already exists.' });
+        } else {
+            console.error('Error creating rate limit combo:', error);
+            next(error);
+        }
     }
 });
 

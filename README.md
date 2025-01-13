@@ -1,9 +1,10 @@
-
 # Faucet Backend API
 
-This API provides endpoints for interacting with two main tables: `faucet.solana_balances` and `faucet.rate_limits`. Below are the available endpoints for each table.
+This API provides endpoints for interacting with two main tables: `faucet.solana_balances` and `faucet.rate_limits`.
+Below are the available endpoints for each table.
 
 ---
+
 ## How to Run
 
 1. Clone the repository
@@ -78,8 +79,7 @@ This API provides endpoints for interacting with two main tables: `faucet.solana
       "account": "string",
       "balance": "number",
       "date": "timestamp"
-    },
-    ...
+    }
   ]
   ```
 
@@ -99,8 +99,7 @@ This API provides endpoints for interacting with two main tables: `faucet.solana
       "account": "string",
       "balance": "number",
       "date": "timestamp"
-    },
-    ...
+    }
   ]
   ```
 
@@ -173,6 +172,40 @@ This API provides endpoints for interacting with two main tables: `faucet.solana
   {
     "key": "string",
     "timestamps": ["number"]
+  }
+  ```
+
+### **Create a New Rate Limit Combination**
+
+**POST** `/api/rate-limits-combo`
+
+- **Description**: Adds a new rate limit combination entry. Each combination of `ip_address`, `wallet_address`,
+  and `github_userid` is checked for uniqueness before inserting to DB.
+- **Request Body**:
+  ```json
+  {
+    "ip_address": "string",
+    "wallet_address": "string",
+    "github_userid": "string"
+  }
+  ```
+- **Curl Command**:
+  ```bash
+  curl -v -X POST http://localhost:3000/api/rate-limits-combo \
+    -H "Content-Type: application/json" \
+    -d '{
+      "ip_address": "19216801",
+      "wallet_address": "wallet_123",
+      "github_userid": "user123"
+    }'
+  ```
+- **Response**:
+ ```json
+  {
+   "id": "3",
+  "ip_address":"19216801",
+  "wallet_address":"wallet_123",
+  "github_userid":"user123"
   }
   ```
 

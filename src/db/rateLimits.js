@@ -44,9 +44,23 @@ const deleteRateLimit = async (key) => {
     return result.rows[0];
 };
 
+async function createRateLimitCombo(ip_address, wallet_address, github_userid ) {
+    const query = `
+        INSERT INTO faucet.rate_limits_combo (ip_address, wallet_address, github_userid)
+        VALUES ($1, $2, $3)
+        RETURNING *;
+    `;
+
+    const values = [ip_address, wallet_address, github_userid];
+    const result = await db.query(query, values);
+
+    return result.rows[0];
+}
+
 export default {
     createRateLimit,
     getRateLimit,
     updateRateLimit,
     deleteRateLimit,
+    createRateLimitCombo
 };
