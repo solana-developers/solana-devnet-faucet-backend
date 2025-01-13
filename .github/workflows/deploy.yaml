@@ -39,7 +39,7 @@ jobs:
       - name: Replace app.yml secrets
         uses: 73h/gae-app-yaml-replace-env-variables@v0.1
         env:
-          POSTGRES_STRING: ${{ secrets.POSTGRES_STRING }} # Format: postgres://user:password@/cloudsql/INSTANCE_CONNECTION_NAME/db_name
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
           DB_USER: ${{ secrets.DB_USER}}
           DB_NAME: ${{ secrets.DB_NAME}}
