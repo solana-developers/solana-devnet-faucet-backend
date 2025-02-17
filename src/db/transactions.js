@@ -21,7 +21,7 @@ const getLastTransaction = async ({ wallet_address, github_id, ip_address, query
         WHERE 
             (wallet_address = $1) OR
             (ip_address = $2) OR
-            (github_username = $3)
+            (github_id = $3)
         ORDER BY timestamp DESC
         LIMIT $4;
         `;
