@@ -5,14 +5,14 @@ const router = express.Router();
 
 // POST a new transaction
 router.post('/transactions', async (req, res, next) => {
-    const { signature, ip_address, wallet_address, github_username, timestamp } = req.body;
+    const { signature, ip_address, wallet_address, github_id, timestamp } = req.body;
 
     if (!signature || !ip_address || !wallet_address || !timestamp) {
         return res.status(400).json({ message: 'Missing required fields (signature, ip_address, wallet_address, timestamp).' });
     }
 
     try {
-        const newTransaction = await transactions.createTransaction(signature, ip_address, wallet_address, github_username ?? '', timestamp);
+        const newTransaction = await transactions.createTransaction(signature, ip_address, wallet_address, github_id ?? '', timestamp);
         res.status(201).json(newTransaction);
     } catch (error) {
         console.error('Error creating transaction:', error);
