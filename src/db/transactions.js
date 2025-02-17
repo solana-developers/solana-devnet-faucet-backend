@@ -1,12 +1,12 @@
 import db from './config.js';
 
-const createTransaction = async (signature, ip_address, wallet_address, github_username, timestamp) => {
+const createTransaction = async (signature, ip_address, wallet_address, github_id, timestamp) => {
     const query = `
-    INSERT INTO faucet.transactions (signature, ip_address, wallet_address, github_username, timestamp)
+    INSERT INTO faucet.transactions (signature, ip_address, wallet_address, github_id, timestamp)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *;
   `;
-    const values = [signature, ip_address, wallet_address, github_username, timestamp];
+    const values = [signature, ip_address, wallet_address, github_id, timestamp];
     const result = await db.query(query, values);
     return result.rows[0];
 };
