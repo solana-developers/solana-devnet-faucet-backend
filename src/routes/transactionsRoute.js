@@ -22,14 +22,15 @@ router.post('/transactions', async (req, res, next) => {
 
 // GET the most recent transaction based on wallet, GitHub or IP
 router.get('/transactions/last', async (req, res, next) => {
-    const { wallet_address, github_username, ip_address } = req.query;
+    const { wallet_address, github_id, ip_address, count } = req.query;
 
-    if (!wallet_address && !github_username && !ip_address) {
-        return res.status(400).json({ message: 'At least one parameter (wallet_address, github_username, or ip_address) is required.' });
+    if (!wallet_address || !ip_address) {
+        return res.status(400).json({ message: 'At least one parameter (wallet_address, or ip_address) is required.' });
     }
+    const queryLimit = !count ? 1 : Number(count);
 
     try {
-        const lastTransaction = await transactions.getLastTransaction({ wallet_address, github_username, ip_address });
+        const lastTransaction = await transactions.getLastTransaction({ wallet_address, github_id, ip_address, queryLimit });
 
         if (lastTransaction) {
             res.status(200).json(lastTransaction);

@@ -11,20 +11,35 @@ const createTransaction = async (signature, ip_address, wallet_address, github_u
     return result.rows[0];
 };
 
-const getLastTransaction = async ({ wallet_address, github_username, ip_address }) => {
-    const query = `
-    SELECT * FROM faucet.transactions
-    WHERE 
-        (wallet_address = $1) OR
-        (github_username = $2) OR
-        (ip_address = $3)
-    ORDER BY timestamp DESC
-    LIMIT 1;
-  `;
+const getLastTransaction = async ({ wallet_address, github_id, ip_address, queryLimit }) => {
+    let query;
+    let values;
 
-    const values = [wallet_address || null, github_username || null, ip_address || null];
+    if (github_id) {
+        query = `
+        SELECT * FROM faucet.transactions
+        WHERE 
+            (wallet_address = $1) OR
+            (ip_address = $2) OR
+            (github_username = $3)
+        ORDER BY timestamp DESC
+        LIMIT $4;
+        `;
+        values = [wallet_address, ip_address, github_id, queryLimit];
+    } else {
+        query = `
+        SELECT * FROM faucet.transactions
+        WHERE 
+            (wallet_address = $1) OR
+            (ip_address = $2)
+        ORDER BY timestamp DESC
+        LIMIT $3;
+        `;
+        values = [wallet_address, ip_address, queryLimit];
+    }
+
     const result = await db.query(query, values);
-    return result.rows[0]; // Returns the most recent transaction found
+    return result.rows;
 };
 
 // Not currently needed, but may be used for implementing TTL
