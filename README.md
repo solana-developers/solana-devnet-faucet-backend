@@ -249,3 +249,4 @@ All endpoints return appropriate HTTP status codes:
 - `200 OK` for successful data retrieval or updates.
 - `404 Not Found` if the requested resource does not exist.
 - `500 Internal Server Error` for unhandled exceptions.
+
