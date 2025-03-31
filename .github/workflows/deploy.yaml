@@ -40,6 +40,7 @@ jobs:
         uses: 73h/gae-app-yaml-replace-env-variables@v0.1
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKENS: ${{ secrets.GH_TOKENS }}
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
           DB_USER: ${{ secrets.DB_USER}}
           DB_NAME: ${{ secrets.DB_NAME}}

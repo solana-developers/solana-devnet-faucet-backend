@@ -1,7 +1,10 @@
 import express from "express";
+import GithubClient from "../clients/githubClient.js";
 
 const ACCOUNT_AGE_MINIMUM_DAYS = 30;
 const router = express.Router();
+
+const githubClient = new GithubClient();
 
 const daysSince = (date) => {
     const msPerDay = 1000 * 60 * 60 * 24;
@@ -11,35 +14,18 @@ const daysSince = (date) => {
 router.get('/gh-validation/:userId', async (req, res) => {
     const { userId } = req.params;
 
-    const GH_TOKEN = process.env.GH_TOKEN;
-    if (!GH_TOKEN) {
-        return res.status(500).json({ error: "GitHub token not configured." });
-    }
-
     try {
-        const response = await fetch(`https://api.github.com/user/${userId}`, {
-            headers: {
-                Authorization: `token ${GH_TOKEN}`,
-                Accept: 'application/vnd.github.v3+json'
-            }
+        const { data: userData } = await githubClient.request('GET /user/{user_id}', {
+            user_id: userId,
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            return res.status(response.status).json({ error: error.message || "GitHub API error." });
-        }
-        const userData = await response.json();
-        let valid;
-
         const accountAge = daysSince(userData.created_at);
-        valid = accountAge >= ACCOUNT_AGE_MINIMUM_DAYS;
+        const valid = accountAge >= ACCOUNT_AGE_MINIMUM_DAYS;
 
         if(!valid){
             console.error(`Github User ID ${userId} is invalid. Username: ${userData.login}`)
         }
-        res.status(200).json({
-            valid,
-        });
+        res.status(200).json({valid});
     } catch (error) {
         console.error("Error calling GitHub API:", error);
         res.status(500).json({ error: "Internal server error." });
