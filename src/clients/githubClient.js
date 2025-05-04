@@ -28,11 +28,17 @@ class GithubClient {
                 return await client.request(endpoint, params);
             } catch (err) {
                 lastError = err;
-                // If the error is due to rate limiting, rotate the token
+
                 if (err.status === 403) {
+                    // If the error is due to rate limiting, rotate the token
                     console.warn(`Token at index ${this.index} failed with status 403. Rotating token...`);
                     this.rotateToken();
                     attempts++;
+                } else if (err.status === 404) {
+                    throw {
+                        status: 404,
+                        message: "GitHub user not found"
+                    };
                 } else {
                     throw err;
                 }
