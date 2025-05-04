@@ -113,112 +113,6 @@ Below are the available endpoints for each table.
 
 ---
 
-## Rate Limits Endpoints
-
-### **Create a New Rate Limit**
-
-**POST** `/api/rate-limits`
-
-- **Description**: Adds a new rate limit entry.
-- **Request Body**:
-  ```json
-  {
-    "key": "string",
-    "timestamps": ["number"]
-  }
-  ```
-- **Curl Command**:
-  ```bash
-  curl -v -X POST http://localhost:3000/api/rate-limits \
-  -H "Content-Type: application/json" \
-  -d '{"key": "test_key_1", "timestamps": [1635793421]}'
-  ```
-- **Response**:
-  ```json
-  {
-    "key": "string",
-    "timestamps": ["number"]
-  }
-  ```
-
-### **Get a Rate Limit by Key**
-
-**GET** `/api/rate-limits/:key`
-
-- **Description**: Retrieves the rate limit entry for a specific key.
-- **Curl Command**:
-  ```bash
-  curl -v http://localhost:3000/api/rate-limits/test_key_1
-  ```
-- **Response**:
-  ```json
-  {
-    "key": "string",
-    "timestamps": ["number"]
-  }
-  ```
-
-### **Update Timestamps for a Rate Limit**
-
-**PUT** `/api/rate-limits/:key`
-
-- **Description**: Updates the timestamps for a specific rate limit key.
-- **Request Body**:
-  ```json
-  {
-    "timestamps": ["number"]
-  }
-  ```
-- **Curl Command**:
-  ```bash
-  curl -v -X PUT http://localhost:3000/api/rate-limits/test_key_1 \
-  -H "Content-Type: application/json" \
-  -d '{"timestamps": [1635793500]}'
-  ```
-- **Response**:
-  ```json
-  {
-    "key": "string",
-    "timestamps": ["number"]
-  }
-  ```
-
-### **Create a New Rate Limit Combination**
-
-**POST** `/api/rate-limits-combo`
-
-- **Description**: Adds a new rate limit combination entry. Each combination of `ip_address`, `wallet_address`,
-  and `github_userid` is checked for uniqueness before inserting to DB.
-- **Request Body**:
-  ```json
-  {
-    "ip_address": "string",
-    "wallet_address": "string",
-    "github_userid": "string"
-  }
-  ```
-- **Curl Command**:
-  ```bash
-  curl -v -X POST http://localhost:3000/api/rate-limits-combo \
-    -H "Content-Type: application/json" \
-    -d '{
-      "ip_address": "19216801",
-      "wallet_address": "wallet_123",
-      "github_userid": "user123"
-    }'
-  ```
-- **Response**:
- ```json
-  {
-   "id": "3",
-  "ip_address":"19216801",
-  "wallet_address":"wallet_123",
-  "github_userid":"user123"
-  }
-  ```
-
----
-
 ## Github Validation Endpoints
 
 ### **Validate Github User ID**
@@ -241,6 +135,163 @@ Below are the available endpoints for each table.
 ```
 
 ---
+
+## Transactions Endpoints
+
+### **Create a New Transaction**
+
+**POST** `/api/transactions`
+
+- **Description**: Creates a new transaction entry with a unique signature.
+- **Request Body**:
+  ```json
+  {
+    "signature": "string",
+    "ip_address": "string",
+    "wallet_address": "string",
+    "github_id": "string (optional)",
+    "timestamp": "number"
+  }
+  ```
+- **Curl Command**:
+  ```bash
+  curl -v -X POST http://localhost:3000/api/transactions \
+    -H "Content-Type: application/json" \
+    -d '{
+      "signature": "tx_123",
+      "ip_address": "192.168.0.1",
+      "wallet_address": "wallet_abc",
+      "github_id": "user123",
+      "timestamp": 1714752000
+    }'
+  ```
+- **Response**:
+  ```json
+  {
+    "signature": "tx_123",
+    "ip_address": "192.168.0.1",
+    "wallet_address": "wallet_abc",
+    "github_id": "user123",
+    "timestamp": 1714752000
+  }
+  ```
+
+---
+
+### **Get the Most Recent Transaction(s)**
+
+**GET** `/api/transactions/last`
+
+- **Description**: Retrieves the most recent transaction(s) matching the given query parameters. You must provide at least one of `wallet_address` or `ip_address`.
+- **Query Params**:
+    - `wallet_address` (string, optional)
+    - `github_id` (string, optional)
+    - `ip_address` (string, optional)
+    - `count` (number, optional – number of results to return; defaults to 1)
+
+- **Curl Command**:
+  ```bash
+  curl -v "http://localhost:3000/api/transactions/last?wallet_address=wallet_abc&count=2"
+  ```
+- **Response** (if found):
+  ```json
+  [
+    {
+      "signature": "tx_123",
+      "ip_address": "192.168.0.1",
+      "wallet_address": "wallet_abc",
+      "github_id": "user123",
+      "timestamp": 1714752000
+    }
+  ]
+  ```
+
+- **Response** (if not found):
+  ```json
+  {
+    "message": "No transaction found for the given criteria."
+  }
+  ```
+
+---
+
+### **Delete a Transaction by Signature**
+
+**DELETE** `/api/transactions/:signature`
+
+- **Description**: Deletes a transaction based on its signature.
+- **Curl Command**:
+  ```bash
+  curl -v -X DELETE http://localhost:3000/api/transactions/tx_123
+  ```
+- **Response** (if deleted):
+  ```json
+  {
+    "signature": "tx_123",
+    "ip_address": "192.168.0.1",
+    "wallet_address": "wallet_abc",
+    "github_id": "user123",
+    "timestamp": 1714752000
+  }
+  ```
+
+- **Response** (if not found):
+  ```json
+  {
+    "message": "Transaction not found"
+  }
+  ```
+
+---
+
+### **Validate User Information**
+
+**POST** `/api/validate`
+
+- **Description**: Validates a GitHub account and checks the transaction history for the given IP address, wallet address, and GitHub ID.
+
+  #### Validation Criteria:
+    - **GitHub Account**
+        - Must be at least 30 days old
+        - Must have at least 1 public repository
+        - Must be of type `User`
+
+    - **Transaction Limits**
+        - Max 200 transactions per IP address (all-time)
+        - Max 100 transactions per wallet address (all-time)
+        - Max 100 transactions per GitHub ID (all-time)
+        - Max 50 transactions for the combination of all three within the last 30 days
+
+- **Request Body**:
+  ```json
+  {
+    "ip_address": "string",
+    "wallet_address": "string",
+    "github_id": "string"
+  }
+  ```
+
+- **Curl Command**:
+  ```bash
+  curl -v -X POST http://localhost:3000/api/validate -H "Content-Type: application/json" -d '{"ip_address": "1234567", "wallet_address": "some_address", "github_id": "54321"}'
+  ```
+
+- **Response (Valid)**:
+  ```json
+  {
+    "valid": true,
+    "reason": ""
+  }
+  ```
+
+- **Response (Invalid)**:
+  ```json
+  {
+    "valid": false,
+    "reason": "Transaction history is invalid"
+  }
+  ```
+
 
 ## Error Handling
 

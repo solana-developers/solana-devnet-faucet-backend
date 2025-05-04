@@ -42,15 +42,6 @@ router.get("/gh-validation/:userId", async (req, res) => {
     res.status(200).json({ valid });
   } catch (error) {
     console.error("Error calling GitHub API:", error);
-
-    // Handle 404 error when user is not found
-    if (error.response?.status === 404) {
-      return res.status(404).json({
-        error: "GitHub user not found",
-        valid: false,
-      });
-    }
-
     res.status(500).json({ error: "Internal server error." });
   }
 });
