@@ -53,7 +53,7 @@ router.post("/validate", async (req, res) => {
     try {
         if(!await validGithubAccount(github_id)) {
             console.error(
-                `Github User ID ${userId} is invalid.`
+                `Github User ID ${github_id} is invalid.`
             );
             return res.status(200).json({
                 valid: false,
