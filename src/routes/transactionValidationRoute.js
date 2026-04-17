@@ -1,87 +1,85 @@
 import express from "express";
-import GithubClient from "../clients/githubClient.js";
+import { z } from "zod";
+
+import GithubClient from "../services/githubClient.js";
 import transactions from "../db/transactions.js";
-
-const GH_ACCOUNT_AGE_MINIMUM_DAYS = 30;
-const GH_MIN_PUBLIC_REPOS = 1;
-const GH_MIN_FOLLOWERS = 0; // optional stricter
-
-const TRANSACTION_IP_LIMIT = 300;
-const TRANSACTION_WALLET_LIMIT = 200;
-const TRANSACTION_GITHUB_LIMIT = 200;
-const TRANSACTION_MONTHLY_LIMIT = 100;
+import { validGithubAccount, validTransactionHistory } from "../services/faucetEligibility.js";
+import { truncateAddress } from "../utils/index.js";
+import { validate } from "./middleware/validate.js";
 
 const router = express.Router();
 
 const githubClient = new GithubClient();
 
-const daysSince = (date) => {
-    const msPerDay = 1000 * 60 * 60 * 24;
-    return Math.floor((new Date() - new Date(date)) / msPerDay);
-};
+// Solana base58 pubkeys: 32–44 chars, excluding 0, O, I, l from the alphabet.
+const SOLANA_BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
-const validGithubAccount = async (github_id) => {
-    const {data: userData} = await githubClient.request(
-        "GET /user/{github_id}",
-        {github_id}
-    );
+// Contract: the faucet frontend sends `ip_address` with delimiters stripped
+// (e.g. "192.168.1.1" → "19216811", "::1" → "1") and stores it in the same
+// shape via POST /transactions. We use it as an opaque DB key here, so we
+// only bound its length and don't validate IP format. If the frontend ever
+// switches to raw IPs, stored rows must be migrated in lockstep or rate
+// limiting will silently stop matching.
+const validateBodySchema = z.object({
+    ip_address: z
+        .string()
+        .min(1, "must not be empty")
+        .max(45, "must be 45 characters or fewer"),
+    wallet_address: z
+        .string()
+        .regex(SOLANA_BASE58_RE, "must be a valid Solana base58 address (32–44 chars)"),
+    github_id: z
+        .string()
+        .max(20, "must be 20 characters or fewer")
+        .regex(/^\d+$/, "must be a numeric GitHub user ID"),
+}).strict();
 
-    const accountAge = daysSince(userData.created_at);
-    const validAge = accountAge >= GH_ACCOUNT_AGE_MINIMUM_DAYS;
-    const validRepos = userData.public_repos >= GH_MIN_PUBLIC_REPOS;
-    const validFollowers = userData.followers >= GH_MIN_FOLLOWERS;
-    const isUser = userData.type === "User";
-
-    return validAge && validRepos && validFollowers && isUser;
-};
-
-const validTransactionHistory = async (ip_address, wallet_address, github_id) => {
-    const stats = await transactions.getTransactionStats({ ip_address, wallet_address, github_id });
-    const comboCount = await transactions.getMonthlyTransactionStats({ ip_address, wallet_address, github_id });
-
-    const ipValid = Number(stats.ip_count) < TRANSACTION_IP_LIMIT;
-    const walletValid = Number(stats.wallet_count) < TRANSACTION_WALLET_LIMIT;
-    const githubValid = Number(stats.github_count) < TRANSACTION_GITHUB_LIMIT;
-    const comboValid = comboCount < TRANSACTION_MONTHLY_LIMIT;
-
-    return ipValid && walletValid && githubValid && comboValid;
-};
-
-router.post("/validate", async (req, res) => {
-    const {ip_address, wallet_address, github_id} = req.body;
+/**
+ * POST /validate
+ * Validates whether a faucet request should be allowed.
+ * Runs GitHub account checks first, then transaction rate-limit checks.
+ *
+ * @body {string} ip_address - Requestor's IP address
+ * @body {string} wallet_address - Solana wallet to receive devnet SOL
+ * @body {string} github_id - GitHub user ID for identity verification
+ * @returns {{ valid: boolean, reason?: string }}
+ */
+router.post("/validate", validate({ body: validateBodySchema }), async (req, res) => {
+    const { ip_address, wallet_address, github_id } = req.body;
 
     try {
-        if(!await validGithubAccount(github_id)) {
-            console.error(
-                `Github User ID ${github_id} is invalid.`
+        const githubResult = await validGithubAccount(githubClient, github_id);
+        if (!githubResult.valid) {
+            console.warn(
+                `[faucet-validation] github_id=${github_id} rejected: ${githubResult.reason}`
             );
             return res.status(200).json({
                 valid: false,
-                reason: "Github account is invalid"
+                reason: githubResult.reason
             });
         }
 
-        if(!await validTransactionHistory(ip_address, wallet_address, github_id)) {
-            console.error(
-                `Transaction history is invalid.`
+        const txResult = await validTransactionHistory(transactions, ip_address, wallet_address, github_id);
+        if (!txResult.valid) {
+            console.warn(
+                `[faucet-validation] github_id=${github_id} wallet=${truncateAddress(wallet_address)} rejected: ${txResult.reason}`
             );
             return res.status(200).json({
                 valid: false,
-                reason: "Transaction history is invalid"
+                reason: txResult.reason
             });
         }
 
-        res.status(200).json({
-            valid: true,
-            reason: ""
-        });
+        res.status(200).json({ valid: true });
     } catch (error) {
-        console.error("Error while validating:", error);
-        if(error.status) {
-            res.status(error.status).json({valid: false, reason: error.message});
-        } else {
-            res.status(500).json({valid: false, reason: "Internal server error."});
+        console.error(`[faucet-validation] github_id=${github_id} wallet=${truncateAddress(wallet_address)} error:`, error);
+        if (error.status === 429) {
+            if (error.retryAfterSeconds !== undefined) {
+                res.set("Retry-After", String(error.retryAfterSeconds));
+            }
+            return res.status(429).json({ valid: false, reason: "GitHub rate limit exceeded." });
         }
+        res.status(500).json({ valid: false, reason: "Internal server error." });
     }
 });
 

@@ -26,9 +26,9 @@ Below are the available endpoints for each table.
     ./cloud-sql-proxy --address 0.0.0.0 --port 5434 <SQL DB Connection String>
     ```
 
-4. **OPTIONAL** In order to test the Github API locally, you need to provide a [Github Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) in your `.env` file. The token only needs `read:user` and `public_repo`
+4. **OPTIONAL** In order to test the Github API locally, you need to provide one or more [Github Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) in your `.env` file. Tokens only need `read:user` and `public_repo`. Multiple tokens are comma-separated and rotated automatically on rate-limit responses.
     ```
-    GH_TOKEN=<Github Token>
+    GH_TOKENS=<token1>,<token2>,...
     ```
 
 5. Start the server
@@ -36,7 +36,12 @@ Below are the available endpoints for each table.
    yarn start
    ```
 
-5. Access the API at `http://localhost:3000/api`.
+6. Access the API at `http://localhost:3000/api`.
+
+7. Run tests
+   ```bash
+   yarn test
+   ```
 
 ---
 
@@ -121,18 +126,26 @@ Below are the available endpoints for each table.
 
 - **Description**: Validates a Github user by fetching their information from the Github API using their user ID.
 - **Request Params**:
-    - `userId` (string): The Github User ID to validate.
+    - `userId` (string): The Github User ID to validate. Must be a numeric string, ≤ 20 chars. Non-numeric or oversized values return `400` with the shared `{ error, details }` shape.
 
 - **Curl Command**:
   ```bash
-  curl -v http://localhost:3000/api/gh-validation/exampleUser 
+  curl -v http://localhost:3000/api/gh-validation/12345
   ```
--**Response**:
-```json
-{
-  "valid": "boolean"
-} 
-```
+- **Response**:
+  ```json
+  {
+    "valid": true
+  }
+  ```
+  or, if the account fails validation:
+  ```json
+  {
+    "valid": false,
+    "reason": "Github account is too new"
+  }
+  ```
+  Possible `reason` values: `Github account not found`, `Github account type is not allowed`, `Github account is too new`, `Github account has too few public repos`, `Github account has too few followers`.
 
 ---
 
@@ -257,12 +270,19 @@ Below are the available endpoints for each table.
         - Must be of type `User`
 
     - **Transaction Limits**
-        - Max 200 transactions per IP address (all-time)
-        - Max 100 transactions per wallet address (all-time)
-        - Max 100 transactions per GitHub ID (all-time)
-        - Max 50 transactions for the combination of all three within the last 30 days
+        - Max 300 transactions per IP address (all-time)
+        - Max 200 transactions per wallet address (all-time)
+        - Max 200 transactions per GitHub ID (all-time)
+        - Max 100 transactions for the combination of all three within the last 30 days
 
-- **Request Body**:
+- **Request Body** (all fields required):
+  | Field | Format |
+  |---|---|
+  | `ip_address` | Opaque client identifier, 1–45 chars (the faucet sends the IP with delimiters stripped, e.g. `19216811`) |
+  | `wallet_address` | Solana base58 public key (32–44 chars, excludes `0 O I l`) |
+  | `github_id` | Numeric string, ≤ 20 chars |
+
+  Unknown body fields are rejected.
   ```json
   {
     "ip_address": "string",
@@ -276,21 +296,33 @@ Below are the available endpoints for each table.
   curl -v -X POST http://localhost:3000/api/validate -H "Content-Type: application/json" -d '{"ip_address": "1234567", "wallet_address": "some_address", "github_id": "54321"}'
   ```
 
-- **Response (Valid)**:
+- **Response (Valid)** — `200`:
   ```json
   {
-    "valid": true,
-    "reason": ""
+    "valid": true
   }
   ```
 
-- **Response (Invalid)**:
+- **Response (Rejected by validation rules)** — `200`:
   ```json
   {
     "valid": false,
-    "reason": "Transaction history is invalid"
+    "reason": "IP address limit exceeded"
   }
   ```
+  Possible `reason` values include: `IP address limit exceeded`, `Wallet address limit exceeded`, `Github ID limit exceeded`, `Monthly request limit exceeded`, `Unable to verify transaction history`, `Github account not found`, `Github account type is not allowed`, `Github account is too new`, `Github account has too few public repos`, `Github account has too few followers`.
+
+- **Response (Bad input)** — `400`:
+  ```json
+  {
+    "error": "Validation failed",
+    "details": [
+      { "path": "wallet_address", "message": "must be a valid Solana base58 address (32–44 chars)" },
+      { "path": "github_id", "message": "must be a numeric GitHub user ID" }
+    ]
+  }
+  ```
+  `details` lists every failing field; `path` identifies the offending field.
 
 
 ## Error Handling
@@ -298,6 +330,7 @@ Below are the available endpoints for each table.
 All endpoints return appropriate HTTP status codes:
 - `201 Created` for successful creations.
 - `200 OK` for successful data retrieval or updates.
+- `400 Bad Request` for missing, mistyped, or oversized request fields.
 - `404 Not Found` if the requested resource does not exist.
 - `500 Internal Server Error` for unhandled exceptions.
 
