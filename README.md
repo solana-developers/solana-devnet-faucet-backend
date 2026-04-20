@@ -16,27 +16,38 @@ Below are the available endpoints for each table.
    yarn install
    ```
 
-3. Set up your `.env` file with the following
-   ```env
-   POSTGRES_STRING=postgresql://<user>:<password>@<host>:<port>/<database>
-   PROJECT_ID=<GCP Project ID>
-   ```
-   **NOTE** if you want to send request directly to Analytics DB, use [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/mysql/sql-proxy) to setup a connection
-   ```
-    ./cloud-sql-proxy --address 0.0.0.0 --port 5434 <SQL DB Connection String>
-    ```
+3. Copy `.env.example` to `.env` and fill in the values. See [Environment Variables](#environment-variables) below for details.
 
-4. **OPTIONAL** In order to test the Github API locally, you need to provide a [Github Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) in your `.env` file. The token only needs `read:user` and `public_repo`
-    ```
-    GH_TOKEN=<Github Token>
-    ```
+   **NOTE** if you want to send requests directly to the Analytics DB, use the [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/mysql/sql-proxy) to set up a connection:
+   ```
+   ./cloud-sql-proxy --address 0.0.0.0 --port 5434 <SQL DB Connection String>
+   ```
 
-5. Start the server
+4. Start the server
    ```bash
    yarn start
    ```
 
 5. Access the API at `http://localhost:3000/api`.
+
+---
+
+## Environment Variables
+
+Setting `POSTGRES_STRING` switches the app into local-dev mode: the DB uses the connection string and the Google service-account auth middleware is bypassed. In App Engine, `POSTGRES_STRING` is unset, `DB_CONNECTION_NAME` triggers the Cloud SQL socket, and every request is verified against `PROJECT_ID`.
+
+| Variable | Required in prod | Required locally | Sensitive | Purpose |
+|---|---|---|---|---|
+| `DB_CONNECTION_NAME` | Yes | No | No | Cloud SQL instance (`project:region:instance`). When set, DB connects via `/cloudsql/` socket. |
+| `DB_USER` | Yes | No | No | Postgres user. |
+| `DB_NAME` | Yes | No | No | Postgres database name. |
+| `DB_PASSWORD` | Yes | No | **Yes** | Postgres password. |
+| `POSTGRES_STRING` | No | Yes | **Yes** | Full Postgres URL (contains user + password). Presence also bypasses the service-account auth middleware. |
+| `PROJECT_ID` | Yes | No | No | GCP project ID; used to verify the faucet-frontend service-account token. |
+| `GH_TOKENS` | Yes | Only to exercise GitHub validation | **Yes** | Comma-separated GitHub PATs (`read:user`, `public_repo`). Rotated on rate-limit. |
+| `PORT` | No | No | No | HTTP listen port. Defaults to `3000`. |
+
+Anything marked **Sensitive** must not be committed, logged, or pasted into tickets/screenshots. In production these are injected from GitHub Actions secrets into `app.yaml` at deploy time.
 
 ---
 
