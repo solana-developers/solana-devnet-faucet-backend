@@ -10,7 +10,33 @@ Backend-of-record for the Solana devnet faucet. The [`solana-devnet-faucet`](htt
 See [`docs/API.md`](docs/API.md) for the full endpoint reference.
 
 ---
-## Development
+
+## Development with Docker (recommended)
+
+Spin up the API plus an ephemeral Postgres in one command:
+
+```bash
+docker compose up --build
+```
+
+- API listens on `http://localhost:3000/api`. Google-token auth is bypassed automatically because compose sets `POSTGRES_STRING` (see `src/routes/middleware/authorization.js`).
+- Postgres is exposed on host port `5433` — user/password/database are all `faucet`. Connect with `psql postgres://faucet:faucet@localhost:5433/faucet` to inspect.
+- Schema from `docker/init.sql` is applied on first boot.
+- `src/` and `app.js` are bind-mounted read-only and the container runs under `node --watch`, so file edits reload without a rebuild.
+- `GH_TOKENS` is passed through from your host env if set; without it, `/validate` and the GitHub check will error at request time (the app still boots fine).
+
+Teardown:
+
+```bash
+docker compose down        # stop containers, keep the Postgres volume
+docker compose down -v     # also wipe the Postgres volume for a clean slate
+```
+
+---
+
+## Development (native)
+
+Use this path if you want to run the API directly against your own Postgres (or the Cloud SQL Auth Proxy).
 
 1. Clone the repository
    ```bash
@@ -36,8 +62,9 @@ See [`docs/API.md`](docs/API.md) for the full endpoint reference.
 
 5. Access the API at `http://localhost:3000/api`.
 
-6. Run tests
-   ```bash
-   npm test              # unit tests — fast, no external dependencies
-   npm run test:e2e      # end-to-end tests — spin up an ephemeral Postgres via testcontainers (requires Docker)
-   ```
+## Tests
+
+```bash
+npm test              # unit tests — fast, no external dependencies
+npm run test:e2e      # end-to-end tests — spin up an ephemeral Postgres via testcontainers (requires Docker)
+```
