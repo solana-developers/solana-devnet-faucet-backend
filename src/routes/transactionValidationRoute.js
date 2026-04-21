@@ -32,34 +32,39 @@ export default function createTransactionValidationRoute({ getGithubClient }) {
         const { ip_address, wallet_address, github_id } = req.body;
         const log = req.log.child({ githubId: github_id, wallet: truncateAddress(wallet_address) });
 
+        let githubResult;
         try {
-            const githubResult = await checkGithubAccount(getGithubClient(), github_id);
-            if (!githubResult.valid) {
-                log.warn({ reason: githubResult.reason }, 'faucet validation rejected (github)');
-                return res.status(200).json({
-                    valid: false,
-                    reason: githubResult.reason
-                });
-            }
-
-            const txResult = await checkTransactionHistory(transactions, ip_address, wallet_address, github_id);
-            if (!txResult.valid) {
-                log.warn({ reason: txResult.reason }, 'faucet validation rejected (transaction history)');
-                return res.status(200).json({
-                    valid: false,
-                    reason: txResult.reason
-                });
-            }
-
-            res.status(200).json({ valid: true });
+            githubResult = await checkGithubAccount(getGithubClient(), github_id);
         } catch (err) {
-            log.error({ err }, 'faucet validation errored');
+            log.error({ err }, 'github eligibility check failed');
+            // 429 = GitHub rate limit (all tokens exhausted). Anything else
+            // — invalid PAT, GitHub 5xx, network failure, missing GH_TOKENS
+            // — means we couldn't reach a verdict, so signal "upstream
+            // unavailable" instead of a generic 500. Lets the frontend
+            // distinguish "retry shortly" from a real server bug.
             if (err.status === 429) {
                 if (err.retryAfterSeconds !== undefined) {
                     res.set("Retry-After", String(err.retryAfterSeconds));
                 }
                 return res.status(429).json({ valid: false, reason: "GitHub rate limit exceeded." });
             }
+            return res.status(503).json({ valid: false, reason: "Identity provider unavailable." });
+        }
+
+        if (!githubResult.valid) {
+            log.warn({ reason: githubResult.reason }, 'faucet validation rejected (github)');
+            return res.status(200).json({ valid: false, reason: githubResult.reason });
+        }
+
+        try {
+            const txResult = await checkTransactionHistory(transactions, ip_address, wallet_address, github_id);
+            if (!txResult.valid) {
+                log.warn({ reason: txResult.reason }, 'faucet validation rejected (transaction history)');
+                return res.status(200).json({ valid: false, reason: txResult.reason });
+            }
+            res.status(200).json({ valid: true });
+        } catch (err) {
+            log.error({ err }, 'transaction history check failed');
             res.status(500).json({ valid: false, reason: "Internal server error." });
         }
     });

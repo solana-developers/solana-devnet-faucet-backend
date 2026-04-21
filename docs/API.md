@@ -201,4 +201,6 @@ All endpoints return appropriate HTTP status codes:
 - `200 OK` for successful data retrieval or updates.
 - `400 Bad Request` for missing, mistyped, or oversized request fields. All `400` responses share the shape shown under [`POST /api/validate`](#response-bad-input--400) — `{ "error": "Validation failed", "details": [{ "path", "message" }] }` — listing every offending field across body / query / params.
 - `404 Not Found` if the requested resource does not exist.
+- `429 Too Many Requests` from `POST /api/validate` when GitHub itself rate-limits us across all configured tokens. Includes a `Retry-After` header.
+- `503 Service Unavailable` from `POST /api/validate` when we couldn't reach a verdict because the GitHub client failed (invalid PAT, GitHub outage, network error, missing `GH_TOKENS`). Body: `{ "valid": false, "reason": "Identity provider unavailable." }`. Distinct from `500` so the frontend can prompt a retry instead of treating it as a server bug.
 - `500 Internal Server Error` for unhandled exceptions.

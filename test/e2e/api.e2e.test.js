@@ -219,6 +219,26 @@ describe("POST /api/validate", () => {
         assert.equal(res.body.reason, "IP address limit exceeded");
     });
 
+    it("returns 503 when the github client throws an unexpected error", async () => {
+        // Anything other than 404/429 from GitHub (e.g. 401 for a bad PAT,
+        // 5xx, network failure) means we can't reach a verdict — surface as
+        // "identity provider unavailable" instead of a generic 500.
+        currentGithubClient = throwingGithubClient(401, "bad credentials");
+
+        const res = await request(app).post("/api/validate").send(validBody).expect(503);
+        assert.deepEqual(res.body, { valid: false, reason: "Identity provider unavailable." });
+    });
+
+    it("returns 503 when the github client provider itself throws (e.g. missing GH_TOKENS)", async () => {
+        // Operator misconfig should look the same to the caller as a GitHub
+        // outage — both mean we couldn't even ask. Provider returns null,
+        // checkGithubAccount tries to call .request on it and blows up.
+        currentGithubClient = null;
+
+        const res = await request(app).post("/api/validate").send(validBody).expect(503);
+        assert.deepEqual(res.body, { valid: false, reason: "Identity provider unavailable." });
+    });
+
     it("returns 400 with structured details on malformed body", async () => {
         const res = await request(app)
             .post("/api/validate")
