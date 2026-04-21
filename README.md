@@ -1,6 +1,6 @@
 # Faucet Backend API
 
-This API provides endpoints for interacting with two main tables: `faucet.solana_balances` and `faucet.rate_limits`.
+This API provides endpoints for interacting with two main tables: `faucet.transactions` and `faucet.solana_balances`.
 
 See [`docs/API.md`](docs/API.md) for the full endpoint reference.
 
@@ -17,29 +17,21 @@ See [`docs/API.md`](docs/API.md) for the full endpoint reference.
    yarn install
    ```
 
-3. Set up your `.env` file with the following
-   ```env
-   POSTGRES_STRING=postgresql://<user>:<password>@<host>:<port>/<database>
-   PROJECT_ID=<GCP Project ID>
-   ```
-   **NOTE** if you want to send request directly to Analytics DB, use [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/mysql/sql-proxy) to setup a connection
-   ```
-    ./cloud-sql-proxy --address 0.0.0.0 --port 5434 <SQL DB Connection String>
-    ```
+3. Copy `.env.example` to `.env` and fill in values.
 
-4. **OPTIONAL** In order to test the Github API locally, you need to provide one or more [Github Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) in your `.env` file. Tokens only need `read:user` and `public_repo`. Multiple tokens are comma-separated and rotated automatically on rate-limit responses.
-    ```
-    GH_TOKENS=<token1>,<token2>,...
-    ```
+   **NOTE** to send requests directly to Analytics DB, use the [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/mysql/sql-proxy):
+   ```
+   ./cloud-sql-proxy --address 0.0.0.0 --port 5434 <SQL DB Connection String>
+   ```
 
-5. Start the server
+4. Start the server
    ```bash
    yarn start
    ```
 
-6. Access the API at `http://localhost:3000/api`.
+5. Access the API at `http://localhost:3000/api`.
 
-7. Run tests
+6. Run tests
    ```bash
    yarn test
    ```
