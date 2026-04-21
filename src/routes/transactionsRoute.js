@@ -1,7 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
 import transactions from '../db/transactions.js';
-import { validate } from './middleware/validate.js';
+import { validateRequest } from './middleware/requestValidator.js';
 import { walletAddressSchema, ipAddressSchema, githubIdSchema } from './schemas.js';
 
 const router = express.Router();
@@ -26,7 +26,7 @@ const lastTransactionQuerySchema = z.object({
 });
 
 // POST a new transaction
-router.post('/transactions', validate({ body: createTransactionBodySchema }), async (req, res, next) => {
+router.post('/transactions', validateRequest({ body: createTransactionBodySchema }), async (req, res, next) => {
     const { signature, ip_address, wallet_address, github_id, timestamp } = req.body;
 
     try {
@@ -39,7 +39,7 @@ router.post('/transactions', validate({ body: createTransactionBodySchema }), as
 });
 
 // GET the most recent transaction based on wallet, GitHub or IP
-router.get('/transactions/last', validate({ query: lastTransactionQuerySchema }), async (req, res, next) => {
+router.get('/transactions/last', validateRequest({ query: lastTransactionQuerySchema }), async (req, res, next) => {
     const { wallet_address, github_id, ip_address, count } = req.query;
     const queryLimit = count ?? 1;
 

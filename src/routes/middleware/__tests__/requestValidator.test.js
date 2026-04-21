@@ -1,11 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { z } from 'zod';
-import { validate } from '../validate.js';
+import { validateRequest } from '../requestValidator.js';
 
-describe('validate middleware', () => {
+describe('validateRequest middleware', () => {
     it('should call next() when all schemas pass', () => {
-        const mw = validate({ body: z.object({ x: z.string() }) });
+        const mw = validateRequest({ body: z.object({ x: z.string() }) });
         const req = { body: { x: "ok" } };
         const res = makeRes();
         let nextCalled = false;
@@ -15,7 +15,7 @@ describe('validate middleware', () => {
     });
 
     it('should replace req.body with parsed output (strips unknown keys by default)', () => {
-        const mw = validate({ body: z.object({ x: z.string() }) });
+        const mw = validateRequest({ body: z.object({ x: z.string() }) });
         const req = { body: { x: "ok", extra: "dropped" } };
         const res = makeRes();
         mw(req, res, () => {});
@@ -23,7 +23,7 @@ describe('validate middleware', () => {
     });
 
     it('should reject extra fields when schema is strict', () => {
-        const mw = validate({ body: z.object({ x: z.string() }).strict() });
+        const mw = validateRequest({ body: z.object({ x: z.string() }).strict() });
         const req = { body: { x: "ok", extra: "boom" } };
         const res = makeRes();
         mw(req, res, () => {});
@@ -35,7 +35,7 @@ describe('validate middleware', () => {
     });
 
     it('should return 400 with structured details when body fails', () => {
-        const mw = validate({
+        const mw = validateRequest({
             body: z.object({
                 name: z.string().min(3, "too short"),
                 age: z.number(),
@@ -51,8 +51,8 @@ describe('validate middleware', () => {
         assert.ok(paths.includes("age"));
     });
 
-    it('should validate params', () => {
-        const mw = validate({ params: z.object({ id: z.string().regex(/^\d+$/) }) });
+    it('should validateRequest params', () => {
+        const mw = validateRequest({ params: z.object({ id: z.string().regex(/^\d+$/) }) });
         const req = { params: { id: "abc" } };
         const res = makeRes();
         mw(req, res, () => { assert.fail("next should not be called"); });
@@ -60,8 +60,8 @@ describe('validate middleware', () => {
         assert.strictEqual(res.body.details[0].path, "id");
     });
 
-    it('should validate query and update req.query in place', () => {
-        const mw = validate({ query: z.object({ page: z.string() }) });
+    it('should validateRequest query and update req.query in place', () => {
+        const mw = validateRequest({ query: z.object({ page: z.string() }) });
         const req = { query: { page: "1", stray: "dropped" } };
         const res = makeRes();
         let nextCalled = false;
@@ -71,7 +71,7 @@ describe('validate middleware', () => {
     });
 
     it('should skip sources that have no schema', () => {
-        const mw = validate({ body: z.object({ x: z.string() }) });
+        const mw = validateRequest({ body: z.object({ x: z.string() }) });
         const req = { body: { x: "ok" }, params: { anything: "goes" }, query: { foo: "bar" } };
         const res = makeRes();
         mw(req, res, () => {});
@@ -82,7 +82,7 @@ describe('validate middleware', () => {
     it('should forward non-Zod errors to next(err)', () => {
         const boom = new Error("schema blew up");
         const fakeSchema = { parse: () => { throw boom; } };
-        const mw = validate({ body: fakeSchema });
+        const mw = validateRequest({ body: fakeSchema });
         const req = { body: {} };
         const res = makeRes();
         let forwarded;
@@ -96,7 +96,7 @@ describe('validate middleware', () => {
         const paramsSpy = {
             parse: (v) => { paramsCalled = true; return v; },
         };
-        const mw = validate({
+        const mw = validateRequest({
             body: z.object({ x: z.string() }),
             params: paramsSpy,
         });

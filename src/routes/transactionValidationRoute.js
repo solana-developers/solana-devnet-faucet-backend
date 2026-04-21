@@ -3,9 +3,9 @@ import { z } from "zod";
 
 import { getGithubClient } from "../services/githubClient.js";
 import transactions from "../db/transactions.js";
-import { validGithubAccount, validTransactionHistory } from "../services/faucetEligibility.js";
+import { checkGithubAccount, checkTransactionHistory } from "../services/faucetEligibility.js";
 import { truncateAddress } from "../utils/index.js";
-import { validate } from "./middleware/validate.js";
+import { validateRequest } from "./middleware/requestValidator.js";
 import { walletAddressSchema, ipAddressSchema, githubIdSchema } from "./schemas.js";
 
 const router = express.Router();
@@ -26,12 +26,12 @@ const validateBodySchema = z.object({
  * @body {string} github_id - GitHub user ID for identity verification
  * @returns {{ valid: boolean, reason?: string }}
  */
-router.post("/validate", validate({ body: validateBodySchema }), async (req, res) => {
+router.post("/validate", validateRequest({ body: validateBodySchema }), async (req, res) => {
     const { ip_address, wallet_address, github_id } = req.body;
     const log = req.log.child({ githubId: github_id, wallet: truncateAddress(wallet_address) });
 
     try {
-        const githubResult = await validGithubAccount(getGithubClient(), github_id);
+        const githubResult = await checkGithubAccount(getGithubClient(), github_id);
         if (!githubResult.valid) {
             log.warn({ reason: githubResult.reason }, 'faucet validation rejected (github)');
             return res.status(200).json({
@@ -40,7 +40,7 @@ router.post("/validate", validate({ body: validateBodySchema }), async (req, res
             });
         }
 
-        const txResult = await validTransactionHistory(transactions, ip_address, wallet_address, github_id);
+        const txResult = await checkTransactionHistory(transactions, ip_address, wallet_address, github_id);
         if (!txResult.valid) {
             log.warn({ reason: txResult.reason }, 'faucet validation rejected (transaction history)');
             return res.status(200).json({

@@ -58,7 +58,7 @@ export async function seedTransactions(pool, rows) {
 }
 
 /**
- * Fake GithubClient matching the shape that faucetEligibility.validGithubAccount
+ * Fake GithubClient matching the shape that faucetEligibility.checkGithubAccount
  * consumes: a single request() method returning { data }.
  */
 export function fakeGithubClient(userData) {

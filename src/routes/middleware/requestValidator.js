@@ -1,7 +1,7 @@
 import { ZodError } from "zod";
 
 /**
- * @typedef {Object} ValidateSchemas
+ * @typedef {Object} RequestSchemas
  * @property {import("zod").ZodTypeAny} [body]
  * @property {import("zod").ZodTypeAny} [params]
  * @property {import("zod").ZodTypeAny} [query]
@@ -15,9 +15,9 @@ const SOURCES = ["body", "params", "query"];
  * list of field-level issues. On success, the parsed (coerced, stripped)
  * values overwrite the originals so handlers operate on trusted input.
  *
- * @param {ValidateSchemas} schemas
+ * @param {RequestSchemas} schemas
  */
-export function validate(schemas) {
+export function validateRequest(schemas) {
     return (req, res, next) => {
         try {
             for (const source of SOURCES) {

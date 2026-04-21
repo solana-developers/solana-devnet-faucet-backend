@@ -46,7 +46,7 @@ export const constants = {
  * @param {string} github_id - GitHub user ID to validate
  * @returns {Promise<ValidationResult>}
  */
-export const validGithubAccount = async (githubClient, github_id) => {
+export const checkGithubAccount = async (githubClient, github_id) => {
     let userData;
     try {
         const response = await githubClient.request(
@@ -90,7 +90,7 @@ export const validGithubAccount = async (githubClient, github_id) => {
  * @param {string} github_id - GitHub user ID
  * @returns {Promise<ValidationResult>}
  */
-export const validTransactionHistory = async (transactions, ip_address, wallet_address, github_id) => {
+export const checkTransactionHistory = async (transactions, ip_address, wallet_address, github_id) => {
     const [stats, comboCount] = await Promise.all([
         transactions.getTransactionStats({ ip_address, wallet_address, github_id }),
         transactions.getMonthlyTransactionStats({ ip_address, wallet_address, github_id }),

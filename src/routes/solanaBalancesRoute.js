@@ -1,7 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
 import solanaBalances from '../db/solanaBalances.js'; // Import the CRUD methods
-import { validate } from './middleware/validate.js';
+import { validateRequest } from './middleware/requestValidator.js';
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ const createSolanaBalanceBodySchema = z.object({
 }).strict();
 
 // CREATE a new Solana balance
-router.post('/solana-balances', validate({ body: createSolanaBalanceBodySchema }), async (req, res, next) => {
+router.post('/solana-balances', validateRequest({ body: createSolanaBalanceBodySchema }), async (req, res, next) => {
     const { account, balance } = req.body;
 
     try {
