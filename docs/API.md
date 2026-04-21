@@ -1,6 +1,6 @@
 # Faucet Backend API
 
-This API provides endpoints for interacting with two main tables: `faucet.solana_balances` and `faucet.rate_limits`.
+This API provides endpoints for interacting with two main tables: `faucet.transactions` and `faucet.solana_balances`.
 
 ## Solana Balances Endpoints
 
