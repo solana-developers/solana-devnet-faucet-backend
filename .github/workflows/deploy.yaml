@@ -9,6 +9,9 @@ jobs:
   deploy:
     name: Deploying to Google App Engine
     runs-on: ubuntu-latest
+    # Required so the final step can push a deploy tag back to the repo.
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -54,3 +57,11 @@ jobs:
         uses: google-github-actions/deploy-appengine@v2
         with:
           deliverables: app.yaml
+
+      # Tag the deployed commit so we can answer "what shipped when" from git
+      # without grepping CI logs. Lightweight tag — points to ${{ github.sha }}.
+      - name: Tag deployed commit
+        run: |
+          TAG="deploy-$(date -u +%Y%m%d-%H%M%S)"
+          git tag "$TAG"
+          git push origin "$TAG"
