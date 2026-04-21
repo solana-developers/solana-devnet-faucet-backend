@@ -1,3 +1,7 @@
+import { logger } from '../logger.js';
+
+const log = logger.child({ component: 'faucetEligibility' });
+
 /**
  * @typedef {Object} ValidationResult
  * @property {boolean} valid - Whether the validation passed
@@ -98,7 +102,12 @@ export const validTransactionHistory = async (transactions, ip_address, wallet_a
     const monthlyCount = Number(comboCount);
 
     if (Number.isNaN(ipCount) || Number.isNaN(walletCount) || Number.isNaN(githubCount) || Number.isNaN(monthlyCount)) {
-        console.warn("[faucet-validation] Unexpected NaN from transaction stats:", { ip_count: stats.ip_count, wallet_count: stats.wallet_count, github_count: stats.github_count, comboCount });
+        log.warn({
+            ip_count: stats.ip_count,
+            wallet_count: stats.wallet_count,
+            github_count: stats.github_count,
+            comboCount,
+        }, 'unexpected NaN from transaction stats');
         return { valid: false, reason: "Unable to verify transaction history" };
     }
 

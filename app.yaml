@@ -18,6 +18,7 @@ env_variables:
   DB_NAME: $DB_NAME
   DB_PASSWORD: $DB_PASSWORD
   DB_CONNECTION_NAME: $DB_CONNECTION_NAME
+  LOG_LEVEL: $LOG_LEVEL
 
 # Automatic scaling configuration
 automatic_scaling:

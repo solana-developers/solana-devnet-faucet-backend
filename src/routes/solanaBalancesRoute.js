@@ -20,9 +20,9 @@ router.post('/solana-balances', validate({ body: createSolanaBalanceBodySchema }
     try {
         const newBalance = await solanaBalances.createSolanaBalance(account, balance);
         res.status(201).json(newBalance);
-    } catch (error) {
-        console.error(`Error creating Solana balance for account: ${account}, Error: ${error.message}`);
-        next(error);
+    } catch (err) {
+        req.log.error({ err, account }, 'failed to create solana balance');
+        next(err);
     }
 });
 
@@ -31,9 +31,9 @@ router.get('/solana-balances/recent', async (req, res, next) => {
     try {
         const recentBalances = await solanaBalances.getRecentBalances();
         res.status(200).json(recentBalances);
-    } catch (error) {
-        console.error(`Error retrieving recent Solana balances, Error: ${error.message}`);
-        next(error);
+    } catch (err) {
+        req.log.error({ err }, 'failed to fetch recent solana balances');
+        next(err);
     }
 });
 

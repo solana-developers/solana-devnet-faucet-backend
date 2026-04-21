@@ -32,9 +32,9 @@ router.post('/transactions', validate({ body: createTransactionBodySchema }), as
     try {
         const newTransaction = await transactions.createTransaction(signature, ip_address, wallet_address, github_id ?? '', timestamp);
         res.status(201).json(newTransaction);
-    } catch (error) {
-        console.error('Error creating transaction:', error);
-        next(error);
+    } catch (err) {
+        req.log.error({ err }, 'failed to create transaction');
+        next(err);
     }
 });
 
@@ -46,9 +46,9 @@ router.get('/transactions/last', validate({ query: lastTransactionQuerySchema })
     try {
         const lastTransaction = await transactions.getLastTransaction({ wallet_address, github_id, ip_address, queryLimit });
         res.status(200).json(lastTransaction);
-    } catch (error) {
-        console.error('Error fetching last transaction:', error);
-        next(error);
+    } catch (err) {
+        req.log.error({ err }, 'failed to fetch last transaction');
+        next(err);
     }
 });
 

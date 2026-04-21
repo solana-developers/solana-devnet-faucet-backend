@@ -1,4 +1,5 @@
 import { OAuth2Client } from 'google-auth-library';
+import { logger } from '../../logger.js';
 
 const oAuth2Client = new OAuth2Client();
 
@@ -12,7 +13,7 @@ if (AUTH_DISABLED && process.env.NODE_ENV === 'production') {
     throw new Error('AUTH_DISABLED=true is not permitted when NODE_ENV=production.');
 }
 if (AUTH_DISABLED) {
-    console.warn('[auth] AUTH_DISABLED=true — Google token validation is bypassed for ALL /api requests. Local development only.');
+    logger.warn('AUTH_DISABLED=true — Google token validation is bypassed for ALL /api requests. Local development only.');
 }
 
 const validateGoogleToken = async (req, res, next) => {
@@ -37,8 +38,8 @@ const validateGoogleToken = async (req, res, next) => {
         // Proceed if valid token
         req.user = tokenInfo; // Attach tokenInfo data (like subject) to req.user
         next();
-    } catch (error) {
-        console.log("Error with Auth", error);
+    } catch (err) {
+        req.log.warn({ err }, 'auth token verification failed');
         res.status(403).json({ message: 'Forbidden' });
     }
 };

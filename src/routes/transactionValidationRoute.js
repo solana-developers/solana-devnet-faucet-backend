@@ -28,13 +28,12 @@ const validateBodySchema = z.object({
  */
 router.post("/validate", validate({ body: validateBodySchema }), async (req, res) => {
     const { ip_address, wallet_address, github_id } = req.body;
+    const log = req.log.child({ githubId: github_id, wallet: truncateAddress(wallet_address) });
 
     try {
         const githubResult = await validGithubAccount(getGithubClient(), github_id);
         if (!githubResult.valid) {
-            console.warn(
-                `[faucet-validation] github_id=${github_id} rejected: ${githubResult.reason}`
-            );
+            log.warn({ reason: githubResult.reason }, 'faucet validation rejected (github)');
             return res.status(200).json({
                 valid: false,
                 reason: githubResult.reason
@@ -43,9 +42,7 @@ router.post("/validate", validate({ body: validateBodySchema }), async (req, res
 
         const txResult = await validTransactionHistory(transactions, ip_address, wallet_address, github_id);
         if (!txResult.valid) {
-            console.warn(
-                `[faucet-validation] github_id=${github_id} wallet=${truncateAddress(wallet_address)} rejected: ${txResult.reason}`
-            );
+            log.warn({ reason: txResult.reason }, 'faucet validation rejected (transaction history)');
             return res.status(200).json({
                 valid: false,
                 reason: txResult.reason
@@ -53,11 +50,11 @@ router.post("/validate", validate({ body: validateBodySchema }), async (req, res
         }
 
         res.status(200).json({ valid: true });
-    } catch (error) {
-        console.error(`[faucet-validation] github_id=${github_id} wallet=${truncateAddress(wallet_address)} error:`, error);
-        if (error.status === 429) {
-            if (error.retryAfterSeconds !== undefined) {
-                res.set("Retry-After", String(error.retryAfterSeconds));
+    } catch (err) {
+        log.error({ err }, 'faucet validation errored');
+        if (err.status === 429) {
+            if (err.retryAfterSeconds !== undefined) {
+                res.set("Retry-After", String(err.retryAfterSeconds));
             }
             return res.status(429).json({ valid: false, reason: "GitHub rate limit exceeded." });
         }

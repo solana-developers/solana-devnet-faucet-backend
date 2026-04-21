@@ -1,4 +1,7 @@
 import { Octokit } from "@octokit/rest";
+import { logger } from "../logger.js";
+
+const log = logger.child({ component: "GithubClient" });
 
 export class GithubClientError extends Error {
     /**
@@ -91,8 +94,9 @@ class GithubClient {
                 const cooldownUntil = parseCooldown(err, this._now());
                 if (cooldownUntil !== undefined) {
                     this._cooldownUntil[idx] = cooldownUntil;
-                    console.warn(
-                        `[GithubClient] Token ${idx} rate-limited until ${new Date(cooldownUntil).toISOString()}`
+                    log.warn(
+                        { tokenIndex: idx, cooldownUntil: new Date(cooldownUntil).toISOString() },
+                        'token rate-limited'
                     );
                     continue;
                 }
@@ -115,7 +119,7 @@ class GithubClient {
     _exhaustedError(endpoint, now, cause) {
         const soonest = Math.min(...this._cooldownUntil);
         const waitSeconds = Math.max(0, Math.ceil((soonest - now) / 1000));
-        console.error(`[GithubClient] All tokens rate-limited for ${endpoint}; retry in ~${waitSeconds}s`);
+        log.error({ endpoint, waitSeconds }, 'all tokens rate-limited');
         return new GithubClientError(
             `All GitHub tokens rate-limited for ${endpoint}; retry in ~${waitSeconds}s`,
             { status: 429, retryAfterSeconds: waitSeconds, cause }
