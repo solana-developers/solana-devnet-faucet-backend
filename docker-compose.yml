@@ -23,14 +23,15 @@ services:
         condition: service_healthy
     environment:
       POSTGRES_STRING: postgres://faucet:faucet@postgres:5432/faucet
+      AUTH_DISABLED: "true"
       PORT: 3000
       GH_TOKENS: ${GH_TOKENS:-}
     ports:
       - "3000:3000"
     volumes:
-      - ./app.js:/app/app.js:ro
+      - ./server.js:/app/server.js:ro
       - ./src:/app/src:ro
-    command: node --watch app.js
+    command: node --watch server.js
 
 volumes:
   postgres_data:

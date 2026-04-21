@@ -19,10 +19,10 @@ Spin up the API plus an ephemeral Postgres in one command:
 docker compose up --build
 ```
 
-- API listens on `http://localhost:3000/api`. Google-token auth is bypassed automatically because compose sets `POSTGRES_STRING` (see `src/routes/middleware/authorization.js`).
+- API listens on `http://localhost:3000/api`. Google-token auth is bypassed because compose sets `AUTH_DISABLED=true` (see `src/routes/middleware/authorization.js`); the app refuses to start with this set when `NODE_ENV=production`.
 - Postgres is exposed on host port `5433` — user/password/database are all `faucet`. Connect with `psql postgres://faucet:faucet@localhost:5433/faucet` to inspect.
 - Schema from `docker/init.sql` is applied on first boot.
-- `src/` and `app.js` are bind-mounted read-only and the container runs under `node --watch`, so file edits reload without a rebuild.
+- `src/` and `server.js` are bind-mounted read-only and the container runs under `node --watch`, so file edits reload without a rebuild.
 - `GH_TOKENS` is passed through from your host env if set; without it, `/validate` and the GitHub check will error at request time (the app still boots fine).
 
 Teardown:

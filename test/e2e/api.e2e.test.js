@@ -23,8 +23,10 @@ before(async () => {
     pool = started.pool;
 
     // POSTGRES_STRING must be set before db/config.js is imported (it wires
-    // its pool at module load). Dynamic import after env setup handles that.
+    // its pool at module load). Same for AUTH_DISABLED in authorization.js.
+    // Dynamic import after env setup handles both.
     process.env.POSTGRES_STRING = started.connectionString;
+    process.env.AUTH_DISABLED = "true";
     const { createApp } = await import("../../src/app.js");
     app = createApp();
 });

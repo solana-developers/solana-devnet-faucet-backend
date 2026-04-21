@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node app.js",
+    "start": "node server.js",
     "test": "node --test 'src/**/__tests__/*.test.js'",
     "test:e2e": "node --test 'test/e2e/**/*.test.js'"
   },
