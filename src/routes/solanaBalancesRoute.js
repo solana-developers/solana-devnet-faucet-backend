@@ -1,10 +1,20 @@
 import express from 'express';
+import { z } from 'zod';
 import solanaBalances from '../db/solanaBalances.js'; // Import the CRUD methods
+import { validate } from './middleware/validate.js';
 
 const router = express.Router();
 
+// `account` is treated as an opaque key (TEXT in the schema, written by a
+// monitor job not by user input) — bound length but don't enforce base58
+// here, since fixture rows like "acct-1" are valid call sites too.
+const createSolanaBalanceBodySchema = z.object({
+    account: z.string().min(1, "must not be empty").max(100, "must be 100 characters or fewer"),
+    balance: z.number().nonnegative(),
+}).strict();
+
 // CREATE a new Solana balance
-router.post('/solana-balances', async (req, res, next) => {
+router.post('/solana-balances', validate({ body: createSolanaBalanceBodySchema }), async (req, res, next) => {
     const { account, balance } = req.body;
 
     try {

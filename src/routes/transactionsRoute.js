@@ -1,15 +1,33 @@
 import express from 'express';
+import { z } from 'zod';
 import transactions from '../db/transactions.js';
+import { validate } from './middleware/validate.js';
+import { walletAddressSchema, ipAddressSchema, githubIdSchema } from './schemas.js';
 
 const router = express.Router();
 
-// POST a new transaction
-router.post('/transactions', async (req, res, next) => {
-    const { signature, ip_address, wallet_address, github_id, timestamp } = req.body;
+// Solana transaction signatures are base58 ed25519 sigs (~88 chars). We don't
+// regex them — `signature` is the table's primary key and any deviation will
+// surface as a uniqueness/insert failure rather than a silent data issue.
+const createTransactionBodySchema = z.object({
+    signature: z.string().min(1, "must not be empty").max(100, "must be 100 characters or fewer"),
+    ip_address: ipAddressSchema,
+    wallet_address: walletAddressSchema,
+    github_id: githubIdSchema.optional(),
+    timestamp: z.number().int().positive(),
+}).strict();
 
-    if (!signature || !ip_address || !wallet_address || !timestamp) {
-        return res.status(400).json({ message: 'Missing required fields (signature, ip_address, wallet_address, timestamp).' });
-    }
+const lastTransactionQuerySchema = z.object({
+    wallet_address: walletAddressSchema,
+    ip_address: ipAddressSchema,
+    github_id: githubIdSchema.optional(),
+    // Express delivers query values as strings; coerce so handlers see a number.
+    count: z.coerce.number().int().positive().optional(),
+});
+
+// POST a new transaction
+router.post('/transactions', validate({ body: createTransactionBodySchema }), async (req, res, next) => {
+    const { signature, ip_address, wallet_address, github_id, timestamp } = req.body;
 
     try {
         const newTransaction = await transactions.createTransaction(signature, ip_address, wallet_address, github_id ?? '', timestamp);
@@ -21,13 +39,9 @@ router.post('/transactions', async (req, res, next) => {
 });
 
 // GET the most recent transaction based on wallet, GitHub or IP
-router.get('/transactions/last', async (req, res, next) => {
+router.get('/transactions/last', validate({ query: lastTransactionQuerySchema }), async (req, res, next) => {
     const { wallet_address, github_id, ip_address, count } = req.query;
-
-    if (!wallet_address || !ip_address) {
-        return res.status(400).json({ message: 'Both wallet_address and ip_address are required.' });
-    }
-    const queryLimit = !count ? 1 : Number(count);
+    const queryLimit = count ?? 1;
 
     try {
         const lastTransaction = await transactions.getLastTransaction({ wallet_address, github_id, ip_address, queryLimit });

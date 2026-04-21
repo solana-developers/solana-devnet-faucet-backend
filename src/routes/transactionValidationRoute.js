@@ -6,30 +6,14 @@ import transactions from "../db/transactions.js";
 import { validGithubAccount, validTransactionHistory } from "../services/faucetEligibility.js";
 import { truncateAddress } from "../utils/index.js";
 import { validate } from "./middleware/validate.js";
+import { walletAddressSchema, ipAddressSchema, githubIdSchema } from "./schemas.js";
 
 const router = express.Router();
 
-// Solana base58 pubkeys: 32–44 chars, excluding 0, O, I, l from the alphabet.
-const SOLANA_BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-
-// Contract: the faucet frontend sends `ip_address` with delimiters stripped
-// (e.g. "192.168.1.1" → "19216811", "::1" → "1") and stores it in the same
-// shape via POST /transactions. We use it as an opaque DB key here, so we
-// only bound its length and don't validate IP format. If the frontend ever
-// switches to raw IPs, stored rows must be migrated in lockstep or rate
-// limiting will silently stop matching.
 const validateBodySchema = z.object({
-    ip_address: z
-        .string()
-        .min(1, "must not be empty")
-        .max(45, "must be 45 characters or fewer"),
-    wallet_address: z
-        .string()
-        .regex(SOLANA_BASE58_RE, "must be a valid Solana base58 address (32–44 chars)"),
-    github_id: z
-        .string()
-        .max(20, "must be 20 characters or fewer")
-        .regex(/^\d+$/, "must be a numeric GitHub user ID"),
+    ip_address: ipAddressSchema,
+    wallet_address: walletAddressSchema,
+    github_id: githubIdSchema,
 }).strict();
 
 /**

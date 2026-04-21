@@ -199,6 +199,6 @@ This API provides endpoints for interacting with two main tables: `faucet.transa
 All endpoints return appropriate HTTP status codes:
 - `201 Created` for successful creations.
 - `200 OK` for successful data retrieval or updates.
-- `400 Bad Request` for missing, mistyped, or oversized request fields.
+- `400 Bad Request` for missing, mistyped, or oversized request fields. All `400` responses share the shape shown under [`POST /api/validate`](#response-bad-input--400) — `{ "error": "Validation failed", "details": [{ "path", "message" }] }` — listing every offending field across body / query / params.
 - `404 Not Found` if the requested resource does not exist.
 - `500 Internal Server Error` for unhandled exceptions.
