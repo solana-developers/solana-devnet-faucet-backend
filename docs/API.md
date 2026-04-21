@@ -100,18 +100,18 @@ This API provides endpoints for interacting with two main tables: `faucet.transa
 
 **GET** `/api/transactions/last`
 
-- **Description**: Retrieves the most recent transaction(s) matching the given query parameters. You must provide at least one of `wallet_address` or `ip_address`.
+- **Description**: Retrieves the most recent transaction(s) matching any of the given identifiers. Both `wallet_address` and `ip_address` are required; `github_id` is optional and broadens the match when supplied.
 - **Query Params**:
-    - `wallet_address` (string, optional)
+    - `wallet_address` (string, required)
+    - `ip_address` (string, required)
     - `github_id` (string, optional)
-    - `ip_address` (string, optional)
     - `count` (number, optional – number of results to return; defaults to 1)
 
 - **Curl Command**:
   ```bash
-  curl -v "http://localhost:3000/api/transactions/last?wallet_address=wallet_abc&count=2"
+  curl -v "http://localhost:3000/api/transactions/last?wallet_address=wallet_abc&ip_address=19216811&count=2"
   ```
-- **Response** (if found):
+- **Response** — `200`. Returns an array of matching rows (empty when nothing matches):
   ```json
   [
     {
@@ -122,13 +122,6 @@ This API provides endpoints for interacting with two main tables: `faucet.transa
       "timestamp": 1714752000
     }
   ]
-  ```
-
-- **Response** (if not found):
-  ```json
-  {
-    "message": "No transaction found for the given criteria."
-  }
   ```
 
 ---

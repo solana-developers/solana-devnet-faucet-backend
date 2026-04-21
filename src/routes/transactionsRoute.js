@@ -25,18 +25,13 @@ router.get('/transactions/last', async (req, res, next) => {
     const { wallet_address, github_id, ip_address, count } = req.query;
 
     if (!wallet_address || !ip_address) {
-        return res.status(400).json({ message: 'At least one parameter (wallet_address, or ip_address) is required.' });
+        return res.status(400).json({ message: 'Both wallet_address and ip_address are required.' });
     }
     const queryLimit = !count ? 1 : Number(count);
 
     try {
         const lastTransaction = await transactions.getLastTransaction({ wallet_address, github_id, ip_address, queryLimit });
-
-        if (lastTransaction) {
-            res.status(200).json(lastTransaction);
-        } else {
-            res.status(204).json({ message: 'No transaction found for the given criteria.' });
-        }
+        res.status(200).json(lastTransaction);
     } catch (error) {
         console.error('Error fetching last transaction:', error);
         next(error);

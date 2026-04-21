@@ -138,6 +138,28 @@ describe("GET /api/transactions/last", () => {
     it("returns 400 when neither wallet nor ip is provided", async () => {
         await request(app).get("/api/transactions/last").expect(400);
     });
+
+    it("returns 400 when wallet_address is missing", async () => {
+        await request(app)
+            .get("/api/transactions/last")
+            .query({ ip_address: "19216811" })
+            .expect(400);
+    });
+
+    it("returns 400 when ip_address is missing", async () => {
+        await request(app)
+            .get("/api/transactions/last")
+            .query({ wallet_address: SAMPLE_WALLET })
+            .expect(400);
+    });
+
+    it("returns 200 with an empty array when nothing matches", async () => {
+        const res = await request(app)
+            .get("/api/transactions/last")
+            .query({ wallet_address: SAMPLE_WALLET, ip_address: "19216811" })
+            .expect(200);
+        assert.deepEqual(res.body, []);
+    });
 });
 
 describe("POST /api/validate", () => {
