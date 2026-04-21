@@ -7,7 +7,7 @@ runtime_config:
   runtime_version: "20"
 
 # Define the entry point for your application
-entrypoint: yarn start
+entrypoint: npm start
 
 # Environment variables (replace with your actual values or secrets)
 env_variables:

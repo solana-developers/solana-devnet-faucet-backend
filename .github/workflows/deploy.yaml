@@ -20,7 +20,7 @@ jobs:
           node-version: 20.x
 
       - name: Install Dependencies
-        run: yarn install
+        run: npm ci
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2

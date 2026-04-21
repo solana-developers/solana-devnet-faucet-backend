@@ -1,6 +1,11 @@
 # Faucet Backend API
 
-This API provides endpoints for interacting with two main tables: `faucet.transactions` and `faucet.solana_balances`.
+Backend-of-record for the Solana devnet faucet. The [`solana-devnet-faucet`](https://github.com/solana-developers/solana-devnet-faucet) frontend is the only consumer; this service gatekeeps airdrops (validates GitHub eligibility, enforces per-IP / per-wallet / per-GitHub caps plus a 30-day rolling window, records each successful airdrop) and tracks faucet wallet health (periodic on-chain balance snapshots of the three source wallets for the frontend's balance-over-time view).
+
+## Tables
+
+- `faucet.transactions` — one row per successful airdrop (`signature`, `ip_address`, `wallet_address`, `github_id`, `timestamp`). Read by `POST /validate` and `GET /transactions/last` to enforce rate limits; written by `POST /transactions`.
+- `faucet.solana_balances` — on-chain balance snapshots of the faucet's source wallets. Written by a cron-style monitor job (`POST /solana-balances`) and read by the balances UI (`GET /solana-balances/recent`).
 
 See [`docs/API.md`](docs/API.md) for the full endpoint reference.
 
@@ -14,7 +19,7 @@ See [`docs/API.md`](docs/API.md) for the full endpoint reference.
 
 2. Install dependencies
    ```bash
-   yarn install
+   npm install
    ```
 
 3. Copy `.env.example` to `.env` and fill in values.
@@ -26,12 +31,13 @@ See [`docs/API.md`](docs/API.md) for the full endpoint reference.
 
 4. Start the server
    ```bash
-   yarn start
+   npm start
    ```
 
 5. Access the API at `http://localhost:3000/api`.
 
 6. Run tests
    ```bash
-   yarn test
+   npm test              # unit tests — fast, no external dependencies
+   npm run test:e2e      # end-to-end tests — spin up an ephemeral Postgres via testcontainers (requires Docker)
    ```
