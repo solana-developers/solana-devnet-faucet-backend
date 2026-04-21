@@ -1,12 +1,17 @@
 import express from 'express';
 import transactionsRoute from './transactionsRoute.js';
-import transactionValidationRoute from './transactionValidationRoute.js';
+import createTransactionValidationRoute from './transactionValidationRoute.js';
 import solanaBalancesRoute from "./solanaBalancesRoute.js";
 
-const router = express.Router();
-
-router.use(transactionsRoute);
-router.use(transactionValidationRoute);
-router.use(solanaBalancesRoute);
-
-export default router;
+/**
+ * Builds the API router. Routes that need request-time dependencies (currently
+ * just /validate, which talks to GitHub) get them via the deps argument so
+ * tests can inject fakes without module-level singletons.
+ */
+export default function createRoutes({ getGithubClient }) {
+    const router = express.Router();
+    router.use(transactionsRoute);
+    router.use(createTransactionValidationRoute({ getGithubClient }));
+    router.use(solanaBalancesRoute);
+    return router;
+}

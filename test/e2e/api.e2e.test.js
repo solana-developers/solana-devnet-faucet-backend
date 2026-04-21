@@ -11,11 +11,14 @@ import {
     validUserData,
     SAMPLE_WALLET,
 } from "./helpers.js";
-import { setGithubClientForTests } from "../../src/services/githubClient.js";
 
 let container;
 let pool;
 let app;
+// Per-test slot consulted by the GitHub client provider injected into createApp.
+// Tests that exercise /validate set it; tests that don't leave it null and the
+// route never calls the provider.
+let currentGithubClient = null;
 
 before(async () => {
     const started = await startPostgres();
@@ -28,7 +31,7 @@ before(async () => {
     process.env.POSTGRES_STRING = started.connectionString;
     process.env.AUTH_DISABLED = "true";
     const { createApp } = await import("../../src/app.js");
-    app = createApp();
+    app = createApp({ getGithubClient: () => currentGithubClient });
 });
 
 after(async () => {
@@ -42,7 +45,7 @@ after(async () => {
 
 beforeEach(async () => {
     await truncateAll(pool);
-    setGithubClientForTests(null);
+    currentGithubClient = null;
 });
 
 describe("POST /api/solana-balances", () => {
@@ -172,37 +175,35 @@ describe("POST /api/validate", () => {
     };
 
     it("returns valid when github + transaction history both pass", async () => {
-        setGithubClientForTests(fakeGithubClient(validUserData()));
+        currentGithubClient = fakeGithubClient(validUserData());
 
         const res = await request(app).post("/api/validate").send(validBody).expect(200);
         assert.deepEqual(res.body, { valid: true });
     });
 
     it("rejects a github account that is too new", async () => {
-        setGithubClientForTests(
-            fakeGithubClient({ ...validUserData(), created_at: new Date().toISOString() })
-        );
+        currentGithubClient = fakeGithubClient({ ...validUserData(), created_at: new Date().toISOString() });
 
         const res = await request(app).post("/api/validate").send(validBody).expect(200);
         assert.deepEqual(res.body, { valid: false, reason: "Github account is too new" });
     });
 
     it("rejects a non-User account type", async () => {
-        setGithubClientForTests(fakeGithubClient({ ...validUserData(), type: "Organization" }));
+        currentGithubClient = fakeGithubClient({ ...validUserData(), type: "Organization" });
 
         const res = await request(app).post("/api/validate").send(validBody).expect(200);
         assert.equal(res.body.reason, "Github account type is not allowed");
     });
 
     it("rejects when the github account is not found (404)", async () => {
-        setGithubClientForTests(throwingGithubClient(404));
+        currentGithubClient = throwingGithubClient(404);
 
         const res = await request(app).post("/api/validate").send(validBody).expect(200);
         assert.equal(res.body.reason, "Github account not found");
     });
 
     it("rejects when the IP transaction limit is exceeded", async () => {
-        setGithubClientForTests(fakeGithubClient(validUserData()));
+        currentGithubClient = fakeGithubClient(validUserData());
 
         // TRANSACTION_IP_LIMIT = 300 — seed exactly that so the next request tips over.
         const rows = Array.from({ length: 300 }, (_, i) => ({

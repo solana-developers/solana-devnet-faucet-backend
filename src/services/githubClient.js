@@ -158,26 +158,4 @@ function parseCooldown(err, now) {
     return undefined;
 }
 
-let sharedClient;
-
-/**
- * Returns a lazily-constructed, process-wide GithubClient.
- * Deferring construction to first use lets the app boot without GH_TOKENS —
- * only routes that actually need GitHub will error at request time.
- */
-export function getGithubClient() {
-    if (!sharedClient) sharedClient = new GithubClient();
-    return sharedClient;
-}
-
-/**
- * Test-only: swap the shared client for a fake, or pass null to reset.
- * On reset, the next getGithubClient() call will construct a real one (and
- * throw if GH_TOKENS is unset), so tests should always set a fake before
- * hitting routes that use GitHub.
- */
-export function setGithubClientForTests(client) {
-    sharedClient = client;
-}
-
 export default GithubClient;
