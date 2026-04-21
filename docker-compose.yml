@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: faucet
+      POSTGRES_PASSWORD: faucet
+      POSTGRES_DB: faucet
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U faucet -d faucet"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_STRING: postgres://faucet:faucet@postgres:5432/faucet
+      PORT: 3000
+      GH_TOKENS: ${GH_TOKENS:-}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app.js:/app/app.js:ro
+      - ./src:/app/src:ro
+    command: node --watch app.js
+
+volumes:
+  postgres_data:
