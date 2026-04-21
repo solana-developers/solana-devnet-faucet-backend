@@ -43,22 +43,4 @@ router.get('/transactions/last', async (req, res, next) => {
     }
 });
 
-// DELETE a transaction by signature
-router.delete('/transactions/:signature', async (req, res, next) => {
-    const { signature } = req.params;
-
-    try {
-        const deletedTransaction = await transactions.deleteTransaction(signature);
-        if (deletedTransaction) {
-            res.status(200).json(deletedTransaction);
-        } else {
-            console.warn(`Transaction not found for signature "${signature}"`);
-            res.status(404).json({ message: 'Transaction not found' });
-        }
-    } catch (error) {
-        console.error(`Error deleting transaction for signature "${signature}":`, error);
-        next(error);
-    }
-});
-
 export default router;

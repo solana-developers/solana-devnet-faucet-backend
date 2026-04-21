@@ -154,4 +154,16 @@ function parseCooldown(err, now) {
     return undefined;
 }
 
+let sharedClient;
+
+/**
+ * Returns a lazily-constructed, process-wide GithubClient.
+ * Deferring construction to first use lets the app boot without GH_TOKENS —
+ * only routes that actually need GitHub will error at request time.
+ */
+export function getGithubClient() {
+    if (!sharedClient) sharedClient = new GithubClient();
+    return sharedClient;
+}
+
 export default GithubClient;

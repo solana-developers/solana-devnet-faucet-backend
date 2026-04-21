@@ -32,27 +32,6 @@ This API provides endpoints for interacting with two main tables: `faucet.solana
   }
   ```
 
-### **Get All Balances for an Account**
-
-**GET** `/api/solana-balances/account/:account`
-
-- **Description**: Retrieves all balances for a specific Solana account.
-- **Curl Command**:
-  ```bash
-  curl -v http://localhost:3000/api/solana-balances/account/test_account_1
-  ```
-- **Response**:
-  ```json
-  [
-    {
-      "id": 1,
-      "account": "string",
-      "balance": "number",
-      "date": "timestamp"
-    }
-  ]
-  ```
-
 ### **Get Recent Balances (Last Month)**
 
 **GET** `/api/solana-balances/recent`
@@ -72,37 +51,6 @@ This API provides endpoints for interacting with two main tables: `faucet.solana
     }
   ]
   ```
-
----
-
-## Github Validation Endpoints
-
-### **Validate Github User ID**
-
-**GET** `/api/github-validation/:userId`
-
-- **Description**: Validates a Github user by fetching their information from the Github API using their user ID.
-- **Request Params**:
-    - `userId` (string): The Github User ID to validate. Must be a numeric string, ≤ 20 chars. Non-numeric or oversized values return `400` with the shared `{ error, details }` shape.
-
-- **Curl Command**:
-  ```bash
-  curl -v http://localhost:3000/api/gh-validation/12345
-  ```
-- **Response**:
-  ```json
-  {
-    "valid": true
-  }
-  ```
-  or, if the account fails validation:
-  ```json
-  {
-    "valid": false,
-    "reason": "Github account is too new"
-  }
-  ```
-  Possible `reason` values: `Github account not found`, `Github account type is not allowed`, `Github account is too new`, `Github account has too few public repos`, `Github account has too few followers`.
 
 ---
 
@@ -180,35 +128,6 @@ This API provides endpoints for interacting with two main tables: `faucet.solana
   ```json
   {
     "message": "No transaction found for the given criteria."
-  }
-  ```
-
----
-
-### **Delete a Transaction by Signature**
-
-**DELETE** `/api/transactions/:signature`
-
-- **Description**: Deletes a transaction based on its signature.
-- **Curl Command**:
-  ```bash
-  curl -v -X DELETE http://localhost:3000/api/transactions/tx_123
-  ```
-- **Response** (if deleted):
-  ```json
-  {
-    "signature": "tx_123",
-    "ip_address": "192.168.0.1",
-    "wallet_address": "wallet_abc",
-    "github_id": "user123",
-    "timestamp": 1714752000
-  }
-  ```
-
-- **Response** (if not found):
-  ```json
-  {
-    "message": "Transaction not found"
   }
   ```
 

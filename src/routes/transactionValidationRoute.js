@@ -1,15 +1,13 @@
 import express from "express";
 import { z } from "zod";
 
-import GithubClient from "../services/githubClient.js";
+import { getGithubClient } from "../services/githubClient.js";
 import transactions from "../db/transactions.js";
 import { validGithubAccount, validTransactionHistory } from "../services/faucetEligibility.js";
 import { truncateAddress } from "../utils/index.js";
 import { validate } from "./middleware/validate.js";
 
 const router = express.Router();
-
-const githubClient = new GithubClient();
 
 // Solana base58 pubkeys: 32–44 chars, excluding 0, O, I, l from the alphabet.
 const SOLANA_BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -48,7 +46,7 @@ router.post("/validate", validate({ body: validateBodySchema }), async (req, res
     const { ip_address, wallet_address, github_id } = req.body;
 
     try {
-        const githubResult = await validGithubAccount(githubClient, github_id);
+        const githubResult = await validGithubAccount(getGithubClient(), github_id);
         if (!githubResult.valid) {
             console.warn(
                 `[faucet-validation] github_id=${github_id} rejected: ${githubResult.reason}`
