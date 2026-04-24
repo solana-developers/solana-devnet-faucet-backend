@@ -42,18 +42,6 @@ const getLastTransaction = async ({wallet_address, github_id, ip_address, queryL
     return result.rows;
 };
 
-// Not currently needed, but may be used for implementing TTL
-const deleteTransaction = async (signature) => {
-    const query = `
-    DELETE FROM faucet.transactions
-    WHERE signature = $1
-    RETURNING *;
-  `;
-    const values = [signature];
-    const result = await db.query(query, values);
-    return result.rows[0];
-};
-
 // Get count for IP, wallet, and GitHub ID (all-time)
 const getTransactionStats = async ({ip_address, wallet_address, github_id}) => {
     const query = `
@@ -91,7 +79,6 @@ const getMonthlyTransactionStats = async ({ip_address, wallet_address, github_id
 export default {
     createTransaction,
     getLastTransaction,
-    deleteTransaction,
     getTransactionStats,
     getMonthlyTransactionStats
 };

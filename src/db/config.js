@@ -15,8 +15,10 @@ const pgClient = new Pool(process.env.DB_CONNECTION_NAME ? {
 
 const query = (text, params) => pgClient.query(text, params);
 const getClient = () => pgClient.connect(); // For transactions if needed
+const close = () => pgClient.end();
 
 export default {
     query,
     getClient,
+    close,
 };

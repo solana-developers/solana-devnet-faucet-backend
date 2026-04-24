@@ -12,18 +12,6 @@ const createSolanaBalance = async (account, balance) => {
     return result.rows[0];
 };
 
-// READ all Solana balances for an account
-const getSolanaBalancesByAccount = async (account) => {
-    const query = `
-        SELECT * FROM faucet.solana_balances
-        WHERE account = $1
-        ORDER BY date DESC;
-    `;
-    const values = [account];
-    const result = await db.query(query, values);
-    return result.rows;
-};
-
 const getRecentBalances = async () => {
     const query = `
         SELECT account, balance, date 
@@ -38,5 +26,4 @@ const getRecentBalances = async () => {
 export default {
     createSolanaBalance,
     getRecentBalances,
-    getSolanaBalancesByAccount,
 };
