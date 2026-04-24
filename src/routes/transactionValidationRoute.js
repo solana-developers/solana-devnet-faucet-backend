@@ -18,7 +18,11 @@ const validateBodySchema = z.object({
  * app can lazy-construct the default singleton (avoids requiring GH_TOKENS at
  * boot) while tests inject a fake.
  *
- * @param {{ getGithubClient: () => import("../services/githubClient.js").default }} deps
+ * @typedef {InstanceType<typeof import("../services/githubClient.js").default>} GithubClientInstance
+ */
+
+/**
+ * @param {{ getGithubClient: () => GithubClientInstance }} deps
  */
 export default function createTransactionValidationRoute({ getGithubClient }) {
     const router = express.Router();

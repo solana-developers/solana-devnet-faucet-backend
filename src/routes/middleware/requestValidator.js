@@ -12,8 +12,9 @@ const SOURCES = ["body", "params", "query"];
 /**
  * Returns an Express middleware that parses req.body / req.params / req.query
  * with the supplied Zod schemas. On failure responds 400 with a structured
- * list of field-level issues. On success, the parsed (coerced, stripped)
- * values overwrite the originals so handlers operate on trusted input.
+ * list of field-level issues. On success, the parsed (and possibly coerced)
+ * values overwrite the originals so handlers operate on trusted input;
+ * unknown keys are stripped by default or rejected when using strict schemas.
  *
  * @param {RequestSchemas} schemas
  */

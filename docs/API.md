@@ -77,9 +77,9 @@ This API provides endpoints for interacting with two main tables: `faucet.transa
     -H "Content-Type: application/json" \
     -d '{
       "signature": "tx_123",
-      "ip_address": "192.168.0.1",
-      "wallet_address": "wallet_abc",
-      "github_id": "user123",
+      "ip_address": "19216801",
+      "wallet_address": "11111111111111111111111111111111",
+      "github_id": "54321",
       "timestamp": 1714752000
     }'
   ```
@@ -87,9 +87,9 @@ This API provides endpoints for interacting with two main tables: `faucet.transa
   ```json
   {
     "signature": "tx_123",
-    "ip_address": "192.168.0.1",
-    "wallet_address": "wallet_abc",
-    "github_id": "user123",
+    "ip_address": "19216801",
+    "wallet_address": "11111111111111111111111111111111",
+    "github_id": "54321",
     "timestamp": 1714752000
   }
   ```
@@ -109,16 +109,16 @@ This API provides endpoints for interacting with two main tables: `faucet.transa
 
 - **Curl Command**:
   ```bash
-  curl -v "http://localhost:3000/api/transactions/last?wallet_address=wallet_abc&ip_address=19216811&count=2"
+  curl -v "http://localhost:3000/api/transactions/last?wallet_address=11111111111111111111111111111111&ip_address=19216801&count=2"
   ```
 - **Response** — `200`. Returns an array of matching rows (empty when nothing matches):
   ```json
   [
     {
       "signature": "tx_123",
-      "ip_address": "192.168.0.1",
-      "wallet_address": "wallet_abc",
-      "github_id": "user123",
+      "ip_address": "19216801",
+      "wallet_address": "11111111111111111111111111111111",
+      "github_id": "54321",
       "timestamp": 1714752000
     }
   ]
@@ -162,7 +162,7 @@ This API provides endpoints for interacting with two main tables: `faucet.transa
 
 - **Curl Command**:
   ```bash
-  curl -v -X POST http://localhost:3000/api/validate -H "Content-Type: application/json" -d '{"ip_address": "1234567", "wallet_address": "some_address", "github_id": "54321"}'
+  curl -v -X POST http://localhost:3000/api/validate -H "Content-Type: application/json" -d '{"ip_address": "1234567", "wallet_address": "11111111111111111111111111111111", "github_id": "54321"}'
   ```
 
 - **Response (Valid)** — `200`:

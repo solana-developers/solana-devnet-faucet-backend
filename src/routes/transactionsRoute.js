@@ -38,7 +38,7 @@ router.post('/transactions', validateRequest({ body: createTransactionBodySchema
     }
 });
 
-// GET the most recent transaction based on wallet, GitHub or IP
+// GET the most recent transaction(s); wallet_address and ip_address are required, github_id is optional
 router.get('/transactions/last', validateRequest({ query: lastTransactionQuerySchema }), async (req, res, next) => {
     const { wallet_address, github_id, ip_address, count } = req.query;
     const queryLimit = count ?? 1;

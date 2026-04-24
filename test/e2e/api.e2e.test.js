@@ -229,7 +229,7 @@ describe("POST /api/validate", () => {
         assert.deepEqual(res.body, { valid: false, reason: "Identity provider unavailable." });
     });
 
-    it("returns 503 when the github client provider itself throws (e.g. missing GH_TOKENS)", async () => {
+    it("returns 503 when the github client provider returns null (e.g. missing GH_TOKENS)", async () => {
         // Operator misconfig should look the same to the caller as a GitHub
         // outage — both mean we couldn't even ask. Provider returns null,
         // checkGithubAccount tries to call .request on it and blows up.
