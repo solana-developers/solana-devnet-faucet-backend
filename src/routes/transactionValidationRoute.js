@@ -1,88 +1,77 @@
 import express from "express";
-import GithubClient from "../clients/githubClient.js";
+import { z } from "zod";
+
 import transactions from "../db/transactions.js";
+import { checkGithubAccount, checkTransactionHistory } from "../services/faucetEligibility.js";
+import { truncateAddress } from "../utils/index.js";
+import { validateRequest } from "./middleware/requestValidator.js";
+import { walletAddressSchema, ipAddressSchema, githubIdSchema } from "./schemas.js";
 
-const GH_ACCOUNT_AGE_MINIMUM_DAYS = 30;
-const GH_MIN_PUBLIC_REPOS = 1;
-const GH_MIN_FOLLOWERS = 0; // optional stricter
+const validateBodySchema = z.object({
+    ip_address: ipAddressSchema,
+    wallet_address: walletAddressSchema,
+    github_id: githubIdSchema,
+}).strict();
 
-const TRANSACTION_IP_LIMIT = 300;
-const TRANSACTION_WALLET_LIMIT = 200;
-const TRANSACTION_GITHUB_LIMIT = 200;
-const TRANSACTION_MONTHLY_LIMIT = 100;
+/**
+ * Builds the /validate route. The GithubClient is supplied via factory so the
+ * app can lazy-construct the default singleton (avoids requiring GH_TOKENS at
+ * boot) while tests inject a fake.
+ *
+ * @typedef {InstanceType<typeof import("../services/githubClient.js").default>} GithubClientInstance
+ */
 
-const router = express.Router();
+/**
+ * @param {{ getGithubClient: () => GithubClientInstance }} deps
+ */
+export default function createTransactionValidationRoute({ getGithubClient }) {
+    const router = express.Router();
 
-const githubClient = new GithubClient();
+    /**
+     * POST /validate
+     * Validates whether a faucet request should be allowed.
+     * Runs GitHub account checks first, then transaction rate-limit checks.
+     */
+    router.post("/validate", validateRequest({ body: validateBodySchema }), async (req, res) => {
+        const { ip_address, wallet_address, github_id } = req.body;
+        const log = req.log.child({ githubId: github_id, wallet: truncateAddress(wallet_address) });
 
-const daysSince = (date) => {
-    const msPerDay = 1000 * 60 * 60 * 24;
-    return Math.floor((new Date() - new Date(date)) / msPerDay);
-};
-
-const validGithubAccount = async (github_id) => {
-    const {data: userData} = await githubClient.request(
-        "GET /user/{github_id}",
-        {github_id}
-    );
-
-    const accountAge = daysSince(userData.created_at);
-    const validAge = accountAge >= GH_ACCOUNT_AGE_MINIMUM_DAYS;
-    const validRepos = userData.public_repos >= GH_MIN_PUBLIC_REPOS;
-    const validFollowers = userData.followers >= GH_MIN_FOLLOWERS;
-    const isUser = userData.type === "User";
-
-    return validAge && validRepos && validFollowers && isUser;
-};
-
-const validTransactionHistory = async (ip_address, wallet_address, github_id) => {
-    const stats = await transactions.getTransactionStats({ ip_address, wallet_address, github_id });
-    const comboCount = await transactions.getMonthlyTransactionStats({ ip_address, wallet_address, github_id });
-
-    const ipValid = Number(stats.ip_count) < TRANSACTION_IP_LIMIT;
-    const walletValid = Number(stats.wallet_count) < TRANSACTION_WALLET_LIMIT;
-    const githubValid = Number(stats.github_count) < TRANSACTION_GITHUB_LIMIT;
-    const comboValid = comboCount < TRANSACTION_MONTHLY_LIMIT;
-
-    return ipValid && walletValid && githubValid && comboValid;
-};
-
-router.post("/validate", async (req, res) => {
-    const {ip_address, wallet_address, github_id} = req.body;
-
-    try {
-        if(!await validGithubAccount(github_id)) {
-            console.error(
-                `Github User ID ${github_id} is invalid.`
-            );
-            return res.status(200).json({
-                valid: false,
-                reason: "Github account is invalid"
-            });
+        let githubResult;
+        try {
+            githubResult = await checkGithubAccount(getGithubClient(), github_id);
+        } catch (err) {
+            log.error({ err }, 'github eligibility check failed');
+            // 429 = GitHub rate limit (all tokens exhausted). Anything else
+            // — invalid PAT, GitHub 5xx, network failure, missing GH_TOKENS
+            // — means we couldn't reach a verdict, so signal "upstream
+            // unavailable" instead of a generic 500. Lets the frontend
+            // distinguish "retry shortly" from a real server bug.
+            if (err.status === 429) {
+                if (err.retryAfterSeconds !== undefined) {
+                    res.set("Retry-After", String(err.retryAfterSeconds));
+                }
+                return res.status(429).json({ valid: false, reason: "GitHub rate limit exceeded." });
+            }
+            return res.status(503).json({ valid: false, reason: "Identity provider unavailable." });
         }
 
-        if(!await validTransactionHistory(ip_address, wallet_address, github_id)) {
-            console.error(
-                `Transaction history is invalid.`
-            );
-            return res.status(200).json({
-                valid: false,
-                reason: "Transaction history is invalid"
-            });
+        if (!githubResult.valid) {
+            log.warn({ reason: githubResult.reason }, 'faucet validation rejected (github)');
+            return res.status(200).json({ valid: false, reason: githubResult.reason });
         }
 
-        res.status(200).json({
-            valid: true,
-            reason: ""
-        });
-    } catch (error) {
-        console.error("Error while validating:", error);
-        if(error.status) {
-            res.status(error.status).json({valid: false, reason: error.message});
-        } else {
-            res.status(500).json({valid: false, reason: "Internal server error."});
+        try {
+            const txResult = await checkTransactionHistory(transactions, ip_address, wallet_address, github_id);
+            if (!txResult.valid) {
+                log.warn({ reason: txResult.reason }, 'faucet validation rejected (transaction history)');
+                return res.status(200).json({ valid: false, reason: txResult.reason });
+            }
+            res.status(200).json({ valid: true });
+        } catch (err) {
+            log.error({ err }, 'transaction history check failed');
+            res.status(500).json({ valid: false, reason: "Internal server error." });
         }
-    }
-});
+    });
 
-export default router;
+    return router;
+}

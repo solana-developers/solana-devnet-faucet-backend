@@ -7,7 +7,7 @@ runtime_config:
   runtime_version: "20"
 
 # Define the entry point for your application
-entrypoint: yarn start
+entrypoint: npm start
 
 # Environment variables (replace with your actual values or secrets)
 env_variables:
@@ -18,6 +18,7 @@ env_variables:
   DB_NAME: $DB_NAME
   DB_PASSWORD: $DB_PASSWORD
   DB_CONNECTION_NAME: $DB_CONNECTION_NAME
+  LOG_LEVEL: $LOG_LEVEL
 
 # Automatic scaling configuration
 automatic_scaling:

@@ -9,6 +9,9 @@ jobs:
   deploy:
     name: Deploying to Google App Engine
     runs-on: ubuntu-latest
+    # Required so the final step can push a deploy tag back to the repo.
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -20,7 +23,7 @@ jobs:
           node-version: 20.x
 
       - name: Install Dependencies
-        run: yarn install
+        run: npm ci
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
@@ -46,6 +49,7 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME}}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
           DB_CONNECTION_NAME: ${{ secrets.DB_CONNECTION_NAME}}
+          LOG_LEVEL: ${{ secrets.LOG_LEVEL || 'warn' }}
         with:
           app_yaml_path: app.yaml
 
@@ -53,3 +57,11 @@ jobs:
         uses: google-github-actions/deploy-appengine@v2
         with:
           deliverables: app.yaml
+
+      # Tag the deployed commit so we can answer "what shipped when" from git
+      # without grepping CI logs. Lightweight tag — points to ${{ github.sha }}.
+      - name: Tag deployed commit
+        run: |
+          TAG="deploy-$(date -u +%Y%m%d-%H%M%S)"
+          git tag "$TAG"
+          git push origin "$TAG"
