@@ -27,6 +27,10 @@ export function createApp({ getGithubClient } = {}) {
         // Honor an upstream request ID if the load balancer sent one; fall
         // back to a UUID so every log line and trace can be correlated.
         genReqId: (req) => req.headers['x-request-id'] ?? randomUUID(),
+        redact: {
+            paths: ['req.headers.authorization'],
+            censor: '[REDACTED]',
+        },
     }));
     app.use('/api', validateGoogleToken, createRoutes({ getGithubClient: githubProvider }));
     app.use((err, req, res, next) => {
