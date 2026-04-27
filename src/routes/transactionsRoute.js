@@ -17,12 +17,19 @@ const createTransactionBodySchema = z.object({
     timestamp: z.number().int().positive(),
 }).strict();
 
+const LAST_TRANSACTION_COUNT_MAX = 100;
+
 const lastTransactionQuerySchema = z.object({
     wallet_address: walletAddressSchema,
     ip_address: ipAddressSchema,
     github_id: githubIdSchema.optional(),
     // Express delivers query values as strings; coerce so handlers see a number.
-    count: z.coerce.number().int().positive().optional(),
+    count: z.coerce
+        .number()
+        .int()
+        .positive()
+        .max(LAST_TRANSACTION_COUNT_MAX, `must be ${LAST_TRANSACTION_COUNT_MAX} or fewer`)
+        .optional(),
 });
 
 // POST a new transaction

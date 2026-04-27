@@ -105,7 +105,7 @@ This API provides endpoints for interacting with two main tables: `faucet.transa
     - `wallet_address` (string, required)
     - `ip_address` (string, required)
     - `github_id` (string, optional)
-    - `count` (number, optional – number of results to return; defaults to 1)
+    - `count` (number, optional – number of results to return; defaults to 1, maximum 100)
 
 - **Curl Command**:
   ```bash

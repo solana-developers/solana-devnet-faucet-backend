@@ -140,6 +140,18 @@ describe("GET /api/transactions/last", () => {
         assert.equal(res.body.length, 2);
     });
 
+    it("rejects oversized count values", async () => {
+        const res = await request(app)
+            .get("/api/transactions/last")
+            .query({ wallet_address: SAMPLE_WALLET, ip_address: "19216811", count: 101 })
+            .expect(400);
+
+        assert.equal(res.body.error, "Validation failed");
+        assert.deepEqual(res.body.details, [
+            { path: "count", message: "must be 100 or fewer" },
+        ]);
+    });
+
     it("returns 400 when neither wallet nor ip is provided", async () => {
         await request(app).get("/api/transactions/last").expect(400);
     });
